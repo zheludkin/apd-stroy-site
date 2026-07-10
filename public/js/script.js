@@ -1,20 +1,5 @@
 document.getElementById('year').textContent = new Date().getFullYear();
 
-document.querySelectorAll('.house-card').forEach((card) => {
-  const checkbox = card.querySelector('.terrace-checkbox');
-  const badge = card.querySelector('.terrace-badge');
-
-  checkbox.addEventListener('change', () => {
-    if (checkbox.checked) {
-      badge.textContent = 'с террасой';
-      badge.classList.add('is-active');
-    } else {
-      badge.textContent = 'без террасы';
-      badge.classList.remove('is-active');
-    }
-  });
-});
-
 const projectSelect = document.getElementById('project');
 
 document.querySelectorAll('.js-choose-project').forEach((button) => {

@@ -14,11 +14,7 @@
 <header class="site-header">
   <div class="container header-inner">
     <a href="#top" class="logo">
-      <svg class="logo-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path d="M6 22L24 7L42 22" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M11 19V40C11 41.1046 11.8954 42 13 42H35C36.1046 42 37 41.1046 37 40V19" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M20 42V29C20 27.8954 20.8954 27 22 27H26C27.1046 27 28 27.8954 28 29V42" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <img class="logo-icon" src="images/logo-icon.png" alt="АПД Строй" width="40" height="40">
       <span class="logo-text">
         <span class="logo-title">АПД Строй</span>
         <span class="logo-subtitle">Архитектура Правильных Домов</span>
@@ -78,94 +74,70 @@
   <section class="catalog" id="catalog">
     <div class="container">
       <h2 class="section-title">Типовые проекты домов</h2>
-      <p class="section-subtitle">Четыре готовых решения — от компактного семейного дома до просторного, с террасой или без.</p>
+      <p class="section-subtitle">Два проверенных проекта каркасного дома — 75 и 90 м², с террасой, для семьи с детьми.</p>
 
       <div class="catalog-grid">
 
-        <article class="house-card" data-project="Берёзка">
-          <div class="house-photo-placeholder">
-            <span>Фото проекта появится здесь</span>
+        <article class="house-card" data-project="Практик 75">
+          <div class="house-photo">
+            <img src="images/practik-75-exterior.png" alt="Дом «Практик 75» — внешний вид" loading="lazy">
           </div>
           <div class="house-body">
             <div class="house-header">
-              <h3>«Берёзка»</h3>
-              <span class="terrace-badge">без террасы</span>
+              <h3>«Практик 75»</h3>
             </div>
             <ul class="house-stats">
               <li><span>Площадь</span><strong>75 м²</strong></li>
-              <li><span>Цена</span><strong>3 500 000 ₽</strong></li>
+              <li><span>Цена</span><strong>3 540 000 ₽</strong></li>
             </ul>
-            <label class="terrace-toggle">
-              <input type="checkbox" class="terrace-checkbox">
-              <span class="toggle-track"><span class="toggle-thumb"></span></span>
-              <span class="toggle-label">Добавить террасу</span>
-            </label>
             <button type="button" class="btn btn-outline btn-block js-choose-project">Узнать подробнее</button>
           </div>
         </article>
 
-        <article class="house-card" data-project="Клён">
-          <div class="house-photo-placeholder">
-            <span>Фото проекта появится здесь</span>
+        <article class="house-card" data-project="Практик 75м">
+          <div class="house-photo house-photo-plan">
+            <img src="images/practik-75-plan.png" alt="Дом «Практик 75» — планировка с мебелью" loading="lazy">
           </div>
           <div class="house-body">
             <div class="house-header">
-              <h3>«Клён»</h3>
-              <span class="terrace-badge is-active">с террасой</span>
+              <h3>«Практик 75м»</h3>
             </div>
             <ul class="house-stats">
-              <li><span>Площадь</span><strong>88 м²</strong></li>
+              <li><span>Площадь</span><strong>75 м²</strong></li>
+              <li><span>Цена</span><strong>3 540 000 ₽</strong></li>
+            </ul>
+            <button type="button" class="btn btn-outline btn-block js-choose-project">Узнать подробнее</button>
+          </div>
+        </article>
+
+        <article class="house-card" data-project="Практик 90">
+          <div class="house-photo">
+            <img src="images/practik-90-exterior.png" alt="Дом «Практик 90» — внешний вид" loading="lazy">
+          </div>
+          <div class="house-body">
+            <div class="house-header">
+              <h3>«Практик 90»</h3>
+            </div>
+            <ul class="house-stats">
+              <li><span>Площадь</span><strong>90 м²</strong></li>
               <li><span>Цена</span><strong>3 950 000 ₽</strong></li>
             </ul>
-            <label class="terrace-toggle">
-              <input type="checkbox" class="terrace-checkbox" checked>
-              <span class="toggle-track"><span class="toggle-thumb"></span></span>
-              <span class="toggle-label">Добавить террасу</span>
-            </label>
             <button type="button" class="btn btn-outline btn-block js-choose-project">Узнать подробнее</button>
           </div>
         </article>
 
-        <article class="house-card" data-project="Дубрава">
-          <div class="house-photo-placeholder">
-            <span>Фото проекта появится здесь</span>
+        <article class="house-card" data-project="Практик 90м">
+          <div class="house-photo house-photo-plan">
+            <img src="images/practik-90-plan.png" alt="Дом «Практик 90» — планировка с мебелью" loading="lazy">
           </div>
           <div class="house-body">
             <div class="house-header">
-              <h3>«Дубрава»</h3>
-              <span class="terrace-badge is-active">с террасой</span>
+              <h3>«Практик 90м»</h3>
             </div>
             <ul class="house-stats">
-              <li><span>Площадь</span><strong>104 м²</strong></li>
-              <li><span>Цена</span><strong>4 450 000 ₽</strong></li>
+              <li><span>Площадь</span><strong>90 м²</strong></li>
+              <li><span>Цена</span><strong>3 950 000 ₽</strong></li>
             </ul>
-            <label class="terrace-toggle">
-              <input type="checkbox" class="terrace-checkbox" checked>
-              <span class="toggle-track"><span class="toggle-thumb"></span></span>
-              <span class="toggle-label">Добавить террасу</span>
-            </label>
-            <button type="button" class="btn btn-outline btn-block js-choose-project">Узнать подробнее</button>
-          </div>
-        </article>
-
-        <article class="house-card" data-project="Сосновый бор">
-          <div class="house-photo-placeholder">
-            <span>Фото проекта появится здесь</span>
-          </div>
-          <div class="house-body">
-            <div class="house-header">
-              <h3>«Сосновый бор»</h3>
-              <span class="terrace-badge is-active">с террасой</span>
-            </div>
-            <ul class="house-stats">
-              <li><span>Площадь</span><strong>122 м²</strong></li>
-              <li><span>Цена</span><strong>4 950 000 ₽</strong></li>
-            </ul>
-            <label class="terrace-toggle">
-              <input type="checkbox" class="terrace-checkbox" checked>
-              <span class="toggle-track"><span class="toggle-thumb"></span></span>
-              <span class="toggle-label">Добавить террасу</span>
-            </label>
             <button type="button" class="btn btn-outline btn-block js-choose-project">Узнать подробнее</button>
           </div>
         </article>
@@ -222,10 +194,10 @@
           <label for="project">Какой проект интересует</label>
           <select id="project" name="project">
             <option value="">Ещё не определился(-лась)</option>
-            <option value="Берёзка">«Берёзка» — 75 м², от 3 500 000 ₽</option>
-            <option value="Клён">«Клён» — 88 м², от 3 950 000 ₽</option>
-            <option value="Дубрава">«Дубрава» — 104 м², от 4 450 000 ₽</option>
-            <option value="Сосновый бор">«Сосновый бор» — 122 м², от 4 950 000 ₽</option>
+            <option value="Практик 75">«Практик 75» — 75 м², 3 540 000 ₽</option>
+            <option value="Практик 75м">«Практик 75м» — 75 м², 3 540 000 ₽</option>
+            <option value="Практик 90">«Практик 90» — 90 м², 3 950 000 ₽</option>
+            <option value="Практик 90м">«Практик 90м» — 90 м², 3 950 000 ₽</option>
           </select>
         </div>
 
@@ -251,8 +223,11 @@
 <footer class="site-footer">
   <div class="container footer-inner">
     <div class="footer-brand">
-      <span class="logo-title">АПД Строй</span>
-      <span class="logo-subtitle">Архитектура Правильных Домов</span>
+      <img class="logo-icon" src="images/logo-icon.png" alt="АПД Строй" width="36" height="36">
+      <span class="logo-text">
+        <span class="logo-title">АПД Строй</span>
+        <span class="logo-subtitle">Архитектура Правильных Домов</span>
+      </span>
     </div>
 
     <div class="footer-contacts">

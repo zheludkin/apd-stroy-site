@@ -150,10 +150,12 @@ a {
 }
 
 .logo-icon {
-  width: 34px;
-  height: 34px;
-  color: var(--accent);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
   flex-shrink: 0;
+  background: var(--white);
 }
 
 .logo-text {
@@ -256,24 +258,21 @@ a {
   flex-direction: column;
 }
 
-.house-photo-placeholder {
+.house-photo {
   aspect-ratio: 4 / 3;
-  background:
-    repeating-linear-gradient(135deg, var(--wood-light), var(--wood-light) 10px, #f6ecdc 10px, #f6ecdc 20px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 16px;
+  background: var(--wood-light);
+  overflow: hidden;
 }
 
-.house-photo-placeholder span {
-  font-size: 0.85rem;
-  color: var(--wood);
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.75);
-  padding: 6px 12px;
-  border-radius: 999px;
+.house-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.house-photo-plan img {
+  object-fit: contain;
+  background: var(--white);
 }
 
 .house-body {
@@ -294,21 +293,6 @@ a {
 .house-header h3 {
   margin: 0;
   font-size: 1.2rem;
-}
-
-.terrace-badge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: var(--wood-light);
-  color: var(--wood-dark);
-  white-space: nowrap;
-}
-
-.terrace-badge.is-active {
-  background: var(--accent);
-  color: var(--white);
 }
 
 .house-stats {
@@ -333,57 +317,6 @@ a {
 .house-stats strong {
   color: var(--wood-dark);
   font-size: 1.05rem;
-}
-
-.terrace-toggle {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.terrace-checkbox {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-track {
-  width: 40px;
-  height: 22px;
-  background: var(--wood-light);
-  border-radius: 999px;
-  position: relative;
-  transition: background 0.15s ease;
-  flex-shrink: 0;
-}
-
-.toggle-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
-  background: var(--white);
-  border-radius: 50%;
-  transition: transform 0.15s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-}
-
-.terrace-checkbox:checked + .toggle-track {
-  background: var(--accent);
-}
-
-.terrace-checkbox:checked + .toggle-track .toggle-thumb {
-  transform: translateX(18px);
-}
-
-.toggle-label {
-  font-size: 0.85rem;
-  color: var(--text-soft);
-  font-weight: 500;
 }
 
 /* Mortgage */
@@ -500,8 +433,14 @@ a {
 
 .footer-brand {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   line-height: 1.2;
+}
+
+.footer-brand .logo-text {
+  display: flex;
+  flex-direction: column;
 }
 
 .footer-brand .logo-title {
