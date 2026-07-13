@@ -23,6 +23,28 @@ const GALLERIES = {
     { src: 'images/c90_section1.png', caption: 'Разрез 1–1 — высоты от пола до потолка' },
     { src: 'images/c90_section2.png', caption: 'Разрез 2–2 — высоты от пола до потолка' },
   ],
+  '75m': [
+    { src: 'images/practik-75-exterior.png', caption: 'Внешний вид' },
+    { src: 'images/practik-75-exterior2.png', caption: 'Внешний вид — вид с другого ракурса' },
+    { src: 'images/practik-75m-plan.png', caption: 'Планировка с мебелью и площадью каждой комнаты' },
+    { src: 'images/c75_facade1.png', caption: 'Фасад в осях 1–4' },
+    { src: 'images/c75_facade2.png', caption: 'Фасад в осях А–Д' },
+    { src: 'images/c75_facade3.png', caption: 'Фасад в осях 4–1' },
+    { src: 'images/c75_facade4.png', caption: 'Фасад в осях Д–А' },
+    { src: 'images/c75_section1.png', caption: 'Разрез 1–1 — высоты от пола до потолка' },
+    { src: 'images/c75_section2.png', caption: 'Разрез 2–2 — высоты от пола до потолка' },
+  ],
+  '90m': [
+    { src: 'images/practik-90-exterior.png', caption: 'Внешний вид' },
+    { src: 'images/practik-90-exterior2.png', caption: 'Внешний вид — вид с другого ракурса' },
+    { src: 'images/practik-90m-plan.png', caption: 'Планировка с мебелью и площадью каждой комнаты' },
+    { src: 'images/c90_facade1.png', caption: 'Фасад в осях 1–4' },
+    { src: 'images/c90_facade2.png', caption: 'Фасад в осях А–Д' },
+    { src: 'images/c90_facade3.png', caption: 'Фасад в осях 4–1' },
+    { src: 'images/c90_facade4.png', caption: 'Фасад в осях Д–А' },
+    { src: 'images/c90_section1.png', caption: 'Разрез 1–1 — высоты от пола до потолка' },
+    { src: 'images/c90_section2.png', caption: 'Разрез 2–2 — высоты от пола до потолка' },
+  ],
 };
 
 const lightbox = document.getElementById('lightbox');
