@@ -401,6 +401,13 @@ a {
   line-height: 1.35;
 }
 
+.mortgage-note {
+  font-size: 0.78rem;
+  color: var(--text-soft);
+  opacity: 0.85;
+  margin: -14px 0 24px;
+}
+
 /* Viewing */
 .viewing {
   padding: 72px 0;
