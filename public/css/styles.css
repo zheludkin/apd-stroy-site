@@ -182,8 +182,16 @@ a {
   gap: 18px;
 }
 
+.header-phones {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.2;
+}
+
 .header-phone {
   font-weight: 700;
+  font-size: 0.9rem;
   text-decoration: none;
   color: var(--wood-dark);
   white-space: nowrap;
@@ -362,20 +370,26 @@ a {
 
 .included-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+@media (min-width: 900px) {
+  .included-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .included-card {
   background: var(--white);
   border-radius: var(--radius);
-  padding: 28px 26px;
+  padding: 18px 16px;
   box-shadow: var(--shadow);
 }
 
 .included-card h3 {
-  margin: 0 0 14px;
-  font-size: 1.1rem;
+  margin: 0 0 8px;
+  font-size: 0.95rem;
   color: var(--accent-dark);
 }
 
@@ -385,24 +399,24 @@ a {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 
 .included-card li {
   position: relative;
-  padding-left: 26px;
-  font-size: 0.92rem;
+  padding-left: 20px;
+  font-size: 0.8rem;
   color: var(--text-soft);
-  line-height: 1.45;
+  line-height: 1.35;
 }
 
 .included-card li::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 0.35em;
-  width: 14px;
-  height: 14px;
+  top: 0.3em;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: var(--accent);
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M13.5 4.5l-7 7L3 8' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
