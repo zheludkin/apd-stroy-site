@@ -32,7 +32,8 @@
 
   <section class="hero">
     <div class="container hero-inner">
-      <h1>Готовый дом за 45 дней с первоначальным взносом от 100 000 ₽</h1>
+      <h1>Готовый дом под ключ за 45 дней с первоначальным взносом от 100 000 руб</h1>
+      <p class="hero-concept">Наша концепция — дом под ключ, честная цена, заезжай и живи!</p>
       <p class="hero-lead">
         Не верьте картинкам — приезжайте и посмотрите наш дом-образец вживую.
         Тёплые каркасные дома для семей с детьми в Перми и Пермском крае,
@@ -50,8 +51,9 @@
       <div class="catalog-grid">
 
         <article class="house-card" data-project="Практик 75">
-          <div class="house-photo">
+          <div class="house-photo js-open-gallery" data-model="75" role="button" tabindex="0" aria-label="Смотреть все фото и планировку «Практик 75»">
             <img src="images/practik-75-exterior.png" alt="Дом «Практик 75» — внешний вид" loading="lazy">
+            <span class="house-photo-hint">🔍 Все фото и планировка</span>
           </div>
           <div class="house-body">
             <div class="house-header">
@@ -66,8 +68,9 @@
         </article>
 
         <article class="house-card" data-project="Практик 75м">
-          <div class="house-photo house-photo-plan">
+          <div class="house-photo house-photo-plan js-open-gallery" data-model="75" role="button" tabindex="0" aria-label="Смотреть все фото и планировку «Практик 75»">
             <img src="images/practik-75-plan.png" alt="Дом «Практик 75» — планировка с мебелью" loading="lazy">
+            <span class="house-photo-hint">🔍 Все фото и планировка</span>
           </div>
           <div class="house-body">
             <div class="house-header">
@@ -82,8 +85,9 @@
         </article>
 
         <article class="house-card" data-project="Практик 90">
-          <div class="house-photo">
+          <div class="house-photo js-open-gallery" data-model="90" role="button" tabindex="0" aria-label="Смотреть все фото и планировку «Практик 90»">
             <img src="images/practik-90-exterior.png" alt="Дом «Практик 90» — внешний вид" loading="lazy">
+            <span class="house-photo-hint">🔍 Все фото и планировка</span>
           </div>
           <div class="house-body">
             <div class="house-header">
@@ -98,8 +102,9 @@
         </article>
 
         <article class="house-card" data-project="Практик 90м">
-          <div class="house-photo house-photo-plan">
+          <div class="house-photo house-photo-plan js-open-gallery" data-model="90" role="button" tabindex="0" aria-label="Смотреть все фото и планировку «Практик 90»">
             <img src="images/practik-90-plan.png" alt="Дом «Практик 90» — планировка с мебелью" loading="lazy">
+            <span class="house-photo-hint">🔍 Все фото и планировка</span>
           </div>
           <div class="house-body">
             <div class="house-header">
@@ -318,6 +323,17 @@
     <p>© <span id="year"></span> АПД Строй. Каркасные дома в Перми и Пермском крае.</p>
   </div>
 </footer>
+
+<div class="lightbox" id="lightbox" hidden>
+  <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Закрыть">✕</button>
+  <button type="button" class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Предыдущее фото">‹</button>
+  <div class="lightbox-stage">
+    <img id="lightboxImg" src="" alt="">
+    <p class="lightbox-caption" id="lightboxCaption"></p>
+    <p class="lightbox-counter" id="lightboxCounter"></p>
+  </div>
+  <button type="button" class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Следующее фото">›</button>
+</div>
 
 <script src="js/script.js"></script>
 </body>
