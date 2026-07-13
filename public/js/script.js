@@ -3,6 +3,7 @@ document.getElementById('year').textContent = new Date().getFullYear();
 const GALLERIES = {
   '75': [
     { src: 'images/practik-75-exterior.png', caption: 'Внешний вид' },
+    { src: 'images/practik-75-exterior2.png', caption: 'Внешний вид — вид с другого ракурса' },
     { src: 'images/practik-75-plan.png', caption: 'Планировка с мебелью и площадью каждой комнаты' },
     { src: 'images/c75_facade1.png', caption: 'Фасад в осях 1–4' },
     { src: 'images/c75_facade2.png', caption: 'Фасад в осях А–Д' },
@@ -13,6 +14,7 @@ const GALLERIES = {
   ],
   '90': [
     { src: 'images/practik-90-exterior.png', caption: 'Внешний вид' },
+    { src: 'images/practik-90-exterior2.png', caption: 'Внешний вид — вид с другого ракурса' },
     { src: 'images/practik-90-plan.png', caption: 'Планировка с мебелью и площадью каждой комнаты' },
     { src: 'images/c90_facade1.png', caption: 'Фасад в осях 1–4' },
     { src: 'images/c90_facade2.png', caption: 'Фасад в осях А–Д' },

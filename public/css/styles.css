@@ -218,6 +218,13 @@ a {
   margin-bottom: 2em;
 }
 
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+}
+
 /* Why section */
 .why {
   padding: 72px 0;
