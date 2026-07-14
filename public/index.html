@@ -295,7 +295,17 @@
           </select>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-lg btn-block" id="leadSubmitBtn">Оставить заявку</button>
+        <label class="form-consent" for="consent">
+          <input type="checkbox" id="consent" name="consent">
+          <span>
+            Персональные данные обрабатываются исключительно в следующих целях и хранятся не более 1 мес:
+            обратная связь с Пользователем по оставленной заявке. Федеральный закон от 27.07.2006 № 152-ФЗ «О персональных данных».
+            Я согласен(на) с <a href="/politika.html" target="_blank" rel="noopener">Политикой обработки персональных данных</a>
+            и даю согласие на обработку моих персональных данных.
+          </span>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block" id="leadSubmitBtn" disabled>Оставить заявку</button>
 
         <p class="form-message" id="formMessage" role="status" aria-live="polite"></p>
       </form>
@@ -322,11 +332,10 @@
     <div class="footer-social">
       <a href="#" aria-label="ВКонтакте">VK</a>
       <a href="#" aria-label="Telegram">Telegram</a>
-      <a href="#" aria-label="Instagram">Instagram</a>
     </div>
   </div>
   <div class="container footer-bottom">
-    <p>© <span id="year"></span> АПД Строй. Каркасные дома в Перми и Пермском крае.</p>
+    <p>© <span id="year"></span> АПД Строй. Каркасные дома в Перми и Пермском крае. <a href="/politika.html">Политика обработки персональных данных</a></p>
   </div>
 </footer>
 

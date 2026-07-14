@@ -616,6 +616,72 @@ a {
   color: rgba(232, 213, 186, 0.7);
 }
 
+.footer-bottom a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.footer-bottom a:hover {
+  color: var(--white);
+}
+
+/* Consent checkbox in lead form */
+.form-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0.4em 0 1.2em;
+  font-size: 0.85rem;
+  color: var(--text-soft);
+  line-height: 1.4;
+}
+
+.form-consent input[type='checkbox'] {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+
+.form-consent a {
+  color: var(--accent-dark);
+}
+
+/* Legal / policy page */
+.legal-section {
+  padding: 60px 0 80px;
+}
+
+.legal-content {
+  max-width: 760px;
+}
+
+.legal-content h1 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  margin-bottom: 0.6em;
+}
+
+.legal-content h2 {
+  font-size: 1.15rem;
+  margin: 1.6em 0 0.5em;
+  color: var(--wood-dark);
+}
+
+.legal-content p,
+.legal-content li {
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+.legal-content ul {
+  padding-left: 1.2em;
+}
+
+.legal-intro {
+  color: var(--text-soft);
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .header-inner {

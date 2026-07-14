@@ -130,18 +130,30 @@ document.querySelectorAll('.js-choose-project').forEach((button) => {
 const leadForm = document.getElementById('leadForm');
 const formMessage = document.getElementById('formMessage');
 const submitBtn = document.getElementById('leadSubmitBtn');
+const consentCheckbox = document.getElementById('consent');
+
+consentCheckbox.addEventListener('change', () => {
+  submitBtn.disabled = !consentCheckbox.checked;
+});
 
 leadForm.addEventListener('submit', async (event) => {
   event.preventDefault();
 
   const name = document.getElementById('name').value.trim();
   const phone = document.getElementById('phone').value.trim();
+  const consent = document.getElementById('consent').checked;
 
   formMessage.textContent = '';
   formMessage.className = 'form-message';
 
   if (!name || !phone) {
     formMessage.textContent = 'Пожалуйста, укажите имя и телефон.';
+    formMessage.classList.add('is-error');
+    return;
+  }
+
+  if (!consent) {
+    formMessage.textContent = 'Нужно согласие на обработку персональных данных, чтобы отправить заявку.';
     formMessage.classList.add('is-error');
     return;
   }
@@ -176,7 +188,7 @@ leadForm.addEventListener('submit', async (event) => {
     formMessage.textContent = err.message || 'Что-то пошло не так. Попробуйте ещё раз или позвоните нам.';
     formMessage.classList.add('is-error');
   } finally {
-    submitBtn.disabled = false;
+    submitBtn.disabled = !consentCheckbox.checked;
     submitBtn.textContent = 'Оставить заявку';
   }
 });
