@@ -184,6 +184,7 @@ leadForm.addEventListener('submit', async (event) => {
     formMessage.textContent = 'Спасибо, менеджер свяжется в течение дня.';
     formMessage.classList.add('is-success');
     leadForm.reset();
+    if (typeof ym === 'function') ym(111213103, 'reachGoal', 'lead_submit');
   } catch (err) {
     formMessage.textContent = err.message || 'Что-то пошло не так. Попробуйте ещё раз или позвоните нам.';
     formMessage.classList.add('is-error');
@@ -191,4 +192,10 @@ leadForm.addEventListener('submit', async (event) => {
     submitBtn.disabled = !consentCheckbox.checked;
     submitBtn.textContent = 'Оставить заявку';
   }
+});
+
+document.querySelectorAll('a[href^="tel:"]').forEach((link) => {
+  link.addEventListener('click', () => {
+    if (typeof ym === 'function') ym(111213103, 'reachGoal', 'phone_click');
+  });
 });
