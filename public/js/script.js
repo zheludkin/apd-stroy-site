@@ -58,6 +58,18 @@ const GALLERIES = {
     { src: 'images/gallery/real-10.jpg', caption: 'Готовый дом АПД Строй' },
     { src: 'images/gallery/real-11.jpg', caption: 'Готовый дом АПД Строй — отделка' },
     { src: 'images/gallery/real-12.jpg', caption: 'Готовый дом АПД Строй — отделка' },
+    { src: 'images/gallery/real-13.jpg', caption: 'Готовый дом АПД Строй — отделка' },
+    { src: 'images/gallery/real-14.jpg', caption: 'Готовый дом АПД Строй — отделка' },
+    { src: 'images/gallery/real-15.jpg', caption: 'Готовый дом АПД Строй — отделка' },
+    { src: 'images/gallery/real-16.jpg', caption: 'Готовый дом АПД Строй — отделка' },
+    { src: 'images/gallery/real-17.jpg', caption: 'Готовый дом АПД Строй — отделка' },
+    { src: 'images/gallery/real-18.jpg', caption: 'Готовый дом АПД Строй — отделка' },
+    { src: 'images/gallery/real-19.jpg', caption: 'Готовый дом АПД Строй' },
+    { src: 'images/gallery/real-20.jpg', caption: 'Готовый дом АПД Строй' },
+    { src: 'images/gallery/real-21.jpg', caption: 'Готовый дом АПД Строй' },
+    { src: 'images/gallery/real-22.jpg', caption: 'Готовый дом АПД Строй' },
+    { src: 'images/gallery/real-23.jpg', caption: 'Готовый дом АПД Строй' },
+    { src: 'images/gallery/real-24.jpg', caption: 'Готовый дом АПД Строй' },
   ],
 };
 
