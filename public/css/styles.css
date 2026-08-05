@@ -214,6 +214,13 @@ a {
   font-size: clamp(1.6rem, 4vw, 2.5rem);
 }
 
+.hero-note {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  opacity: 0.85;
+  margin: 6px 0 0;
+}
+
 .hero-concept {
   font-size: 1.15rem;
   font-weight: 700;
