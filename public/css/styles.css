@@ -266,6 +266,42 @@ a {
   color: var(--accent);
 }
 
+/* Gallery */
+.gallery {
+  padding: 72px 0;
+  background: var(--bg-alt);
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.gallery-photo {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.gallery-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.gallery-photo:hover img {
+  transform: scale(1.04);
+}
+
+.gallery-photo:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
 /* Catalog */
 .catalog {
   padding: 72px 0;

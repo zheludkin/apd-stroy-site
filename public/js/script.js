@@ -45,6 +45,20 @@ const GALLERIES = {
     { src: 'images/c90_section1.png', caption: 'Разрез 1–1 — высоты от пола до потолка' },
     { src: 'images/c90_section2.png', caption: 'Разрез 2–2 — высоты от пола до потолка' },
   ],
+  real: [
+    { src: 'images/gallery/real-01.jpg', caption: 'Готовый дом АПД Строй' },
+    { src: 'images/gallery/real-02.jpg', caption: 'Готовый дом АПД Строй' },
+    { src: 'images/gallery/real-03.jpg', caption: 'Готовый дом АПД Строй' },
+    { src: 'images/gallery/real-04.jpg', caption: 'Готовый дом АПД Строй — терраса' },
+    { src: 'images/gallery/real-05.jpg', caption: 'Готовый дом АПД Строй' },
+    { src: 'images/gallery/real-06.jpg', caption: 'Готовый дом АПД Строй — интерьер' },
+    { src: 'images/gallery/real-07.jpg', caption: 'Готовый дом АПД Строй' },
+    { src: 'images/gallery/real-08.jpg', caption: 'Готовый дом АПД Строй — терраса' },
+    { src: 'images/gallery/real-09.jpg', caption: 'Готовый дом АПД Строй — терраса' },
+    { src: 'images/gallery/real-10.jpg', caption: 'Готовый дом АПД Строй' },
+    { src: 'images/gallery/real-11.jpg', caption: 'Готовый дом АПД Строй — отделка' },
+    { src: 'images/gallery/real-12.jpg', caption: 'Готовый дом АПД Строй — отделка' },
+  ],
 };
 
 const lightbox = document.getElementById('lightbox');
@@ -78,11 +92,12 @@ function closeGallery() {
 }
 
 document.querySelectorAll('.js-open-gallery').forEach((el) => {
-  el.addEventListener('click', () => openGallery(el.dataset.model, 0));
+  const startIndex = Number(el.dataset.index) || 0;
+  el.addEventListener('click', () => openGallery(el.dataset.model, startIndex));
   el.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      openGallery(el.dataset.model, 0);
+      openGallery(el.dataset.model, startIndex);
     }
   });
 });
