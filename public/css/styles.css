@@ -853,3 +853,60 @@ a {
     right: 8px;
   }
 }
+
+.cookie-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 500;
+  background: var(--wood-dark);
+  color: var(--wood-light);
+  padding: 18px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  box-shadow: 0 -12px 30px -14px rgba(46, 36, 25, 0.4);
+}
+
+.cookie-banner p {
+  margin: 0;
+  max-width: 640px;
+  font-size: 0.9rem;
+}
+
+.cookie-banner a {
+  color: var(--white);
+  text-decoration: underline;
+}
+
+.cookie-banner-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.cookie-banner .btn {
+  padding: 10px 20px;
+  font-size: 0.9rem;
+}
+
+.cookie-banner .btn-outline {
+  color: var(--wood-light);
+  border-color: var(--wood-light);
+}
+
+.cookie-banner .btn-outline:hover {
+  background: rgba(232, 213, 186, 0.15);
+  border-color: var(--white);
+  color: var(--white);
+}
+
+@media (max-width: 640px) {
+  .cookie-banner {
+    flex-direction: column;
+    text-align: center;
+  }
+}
