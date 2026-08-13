@@ -854,6 +854,10 @@ a {
   }
 }
 
+.cookie-banner[hidden] {
+  display: none;
+}
+
 .cookie-banner {
   position: fixed;
   left: 0;
