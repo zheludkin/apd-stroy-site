@@ -24,16 +24,38 @@ async function notifyTelegramGroup({ name, phone, project, callTime }) {
     `Проект: ${project || '—'}\n` +
     `Удобное время звонка: ${callTime || '—'}`;
 
-  const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text }),
-  });
+  const attempts = 3;
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      let response;
+      try {
+        response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text }),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
 
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Telegram sendMessage ${response.status}: ${body}`);
+      if (!response.ok) {
+        const body = await response.text();
+        throw new Error(`Telegram sendMessage ${response.status}: ${body}`);
+      }
+      return;
+    } catch (err) {
+      lastError = err;
+      console.error(`Попытка ${attempt}/${attempts} отправки в Telegram не удалась:`, err.message);
+      if (attempt < attempts) {
+        await new Promise((r) => setTimeout(r, attempt * 2000));
+      }
+    }
   }
+  throw lastError;
 }
 
 app.post('/api/leads', async (req, res) => {
