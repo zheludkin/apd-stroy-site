@@ -1,20 +1,26 @@
 require('dotenv').config();
 const path = require('path');
 const express = require('express');
-const { appendLead } = require('./lib/db');
+const { appendLead, getPool, ensureSchema } = require('./lib/db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Сеть Timeweb до api.telegram.org нестабильна (fetch failed/ETIMEDOUT).
+// Быстрый путь (sendTelegramMessage) пробует сразу с короткими повторами;
+// параллельно фоновый цикл (backgroundRetryLoop) каждые 2 минуты добивает
+// то, что быстрый путь не смог — до RETRY_LIMIT попыток на заявку. Работает
+// пока запущен процесс на Timeweb, без зависимости от локального компьютера.
+const RETRY_LIMIT = 20; // ~40+ минут добивания с интервалом фонового цикла
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-async function notifyTelegramGroup({ name, phone, project, callTime }) {
+async function sendTelegramMessage({ name, phone, project, callTime }) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_GROUP_CHAT_ID;
   if (!token || !chatId) {
-    console.error('TELEGRAM_BOT_TOKEN/TELEGRAM_GROUP_CHAT_ID не заданы — заявка с сайта не отправлена в группу.');
-    return;
+    throw new Error('TELEGRAM_BOT_TOKEN/TELEGRAM_GROUP_CHAT_ID не заданы');
   }
 
   const text =
@@ -24,29 +30,35 @@ async function notifyTelegramGroup({ name, phone, project, callTime }) {
     `Проект: ${project || '—'}\n` +
     `Удобное время звонка: ${callTime || '—'}`;
 
-  const attempts = 3;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  let response;
+  try {
+    response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text }),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Telegram sendMessage ${response.status}: ${body}`);
+  }
+}
+
+async function notifyTelegramGroup(lead, { attempts = 3 } = {}) {
   let lastError;
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000);
-      let response;
-      try {
-        response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: chatId, text }),
-          signal: controller.signal,
-        });
-      } finally {
-        clearTimeout(timeout);
+      await sendTelegramMessage(lead);
+      if (lead.id) {
+        await getPool().query('UPDATE leads SET notified_at = now() WHERE id = $1', [lead.id]);
       }
-
-      if (!response.ok) {
-        const body = await response.text();
-        throw new Error(`Telegram sendMessage ${response.status}: ${body}`);
-      }
-      return;
+      return true;
     } catch (err) {
       lastError = err;
       console.error(`Попытка ${attempt}/${attempts} отправки в Telegram не удалась:`, err.message);
@@ -55,7 +67,33 @@ async function notifyTelegramGroup({ name, phone, project, callTime }) {
       }
     }
   }
-  throw lastError;
+  console.error('Быстрый путь отправки исчерпан, заявка уйдёт в фоновый цикл повторов:', lastError?.message);
+  return false;
+}
+
+async function backgroundRetryLoop() {
+  try {
+    const { rows } = await getPool().query(
+      `SELECT id, name, phone, project, call_time AS "callTime"
+       FROM leads
+       WHERE source = 'Сайт' AND notified_at IS NULL AND notify_attempts < $1
+       ORDER BY id ASC`,
+      [RETRY_LIMIT]
+    );
+
+    for (const lead of rows) {
+      await getPool().query('UPDATE leads SET notify_attempts = notify_attempts + 1 WHERE id = $1', [lead.id]);
+      try {
+        await sendTelegramMessage(lead);
+        await getPool().query('UPDATE leads SET notified_at = now() WHERE id = $1', [lead.id]);
+        console.log(`Фоновый повтор: заявка #${lead.id} отправлена в Telegram.`);
+      } catch (err) {
+        console.error(`Фоновый повтор: заявка #${lead.id} — попытка не удалась —`, err.message);
+      }
+    }
+  } catch (err) {
+    console.error('Фоновый цикл повторов упал:', err.message);
+  }
 }
 
 app.post('/api/leads', async (req, res) => {
@@ -65,18 +103,24 @@ app.post('/api/leads', async (req, res) => {
     return res.status(400).json({ ok: false, error: 'Укажите имя и телефон.' });
   }
 
+  let leadId;
   try {
-    await appendLead({ name, phone, project, callTime, source: 'Сайт' });
+    leadId = await appendLead({ name, phone, project, callTime, source: 'Сайт' });
     res.json({ ok: true });
   } catch (err) {
     console.error('Не удалось сохранить заявку в базу данных:', err.message);
     return res.status(500).json({ ok: false, error: 'Не удалось сохранить заявку. Попробуйте ещё раз.' });
   }
 
-  notifyTelegramGroup({ name, phone, project, callTime }).catch((err) => {
-    console.error('Не удалось отправить заявку с сайта в группу:', err.message);
-  });
+  notifyTelegramGroup({ id: leadId, name, phone, project, callTime });
 });
+
+ensureSchema()
+  .then(() => {
+    backgroundRetryLoop();
+    setInterval(backgroundRetryLoop, 2 * 60 * 1000);
+  })
+  .catch((err) => console.error('Не удалось подготовить схему БД:', err.message));
 
 app.listen(PORT, () => {
   console.log(`АПД Строй сайт запущен: http://localhost:${PORT}`);
