@@ -11,7 +11,8 @@ const PORT = process.env.PORT || 3000;
 // параллельно фоновый цикл (backgroundRetryLoop) каждые 2 минуты добивает
 // то, что быстрый путь не смог — до RETRY_LIMIT попыток на заявку. Работает
 // пока запущен процесс на Timeweb, без зависимости от локального компьютера.
-const RETRY_LIMIT = 20; // ~40+ минут добивания с интервалом фонового цикла
+const RETRY_LIMIT = 96; // ~48 часов добивания при интервале фонового цикла 30 минут
+const RETRY_INTERVAL_MS = 30 * 60 * 1000;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -118,7 +119,7 @@ app.post('/api/leads', async (req, res) => {
 ensureSchema()
   .then(() => {
     backgroundRetryLoop();
-    setInterval(backgroundRetryLoop, 2 * 60 * 1000);
+    setInterval(backgroundRetryLoop, RETRY_INTERVAL_MS);
   })
   .catch((err) => console.error('Не удалось подготовить схему БД:', err.message));
 
