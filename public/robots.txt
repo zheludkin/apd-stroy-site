@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://апд59.рф/sitemap.xml
