@@ -1,7 +1,7 @@
 require('dotenv').config();
 const path = require('path');
 const express = require('express');
-const { appendLead, getPool, ensureSchema } = require('./lib/db');
+const { appendLead, getPool, ensureSchema, getLeadsPendingMetrikaUpload, markMetrikaUploaded } = require('./lib/db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,6 +13,56 @@ const PORT = process.env.PORT || 3000;
 // пока запущен процесс на Timeweb, без зависимости от локального компьютера.
 const RETRY_LIMIT = 96; // ~48 часов добивания при интервале фонового цикла 30 минут
 const RETRY_INTERVAL_MS = 30 * 60 * 1000;
+
+// Офлайн-конверсии в Яндекс.Метрику по yclid — обходят cookie-баннер (152-ФЗ),
+// т.к. Метрика на сайте грузится только после согласия, а yclid ловится ДО него
+// (см. attribution-скрипт в index.html). Матчинг у Метрики работает до 21 дня
+// с момента клика по рекламе, поэтому раз в час достаточно.
+const METRIKA_COUNTER_ID = 111213103;
+const METRIKA_LEAD_SUBMIT_GOAL_ID = 595569138; // цель "lead_submit"
+const METRIKA_UPLOAD_INTERVAL_MS = 60 * 60 * 1000;
+
+async function uploadOfflineConversionsLoop() {
+  try {
+    const leads = await getLeadsPendingMetrikaUpload();
+    if (!leads.length) return;
+
+    const token = process.env.METRIKA_OAUTH_TOKEN;
+    if (!token) {
+      console.error('METRIKA_OAUTH_TOKEN не задан — офлайн-конверсии не выгружены');
+      return;
+    }
+
+    const rows = leads.map((lead) => {
+      const dateTime = Math.floor(new Date(lead.created_at).getTime() / 1000);
+      return `yclid:${lead.yclid},${METRIKA_LEAD_SUBMIT_GOAL_ID},${dateTime},,`;
+    });
+    const csv = `UserId,Target,DateTime,Price,Currency\n${rows.join('\n')}\n`;
+
+    const form = new FormData();
+    form.append('file', new Blob([csv], { type: 'text/csv' }), 'offline_conversions.csv');
+
+    const response = await fetch(
+      `https://api-metrika.yandex.net/management/v1/counter/${METRIKA_COUNTER_ID}/offline_conversions/upload?type=BASIC`,
+      { method: 'POST', headers: { Authorization: `OAuth ${token}` }, body: form }
+    );
+    const json = await response.json();
+
+    if (!response.ok) {
+      console.error('Метрика offline_conversions upload — ошибка:', response.status, JSON.stringify(json));
+      return;
+    }
+
+    if (json.uploading && json.uploading.line_quantity === leads.length) {
+      await markMetrikaUploaded(leads.map((lead) => lead.id));
+      console.log(`Офлайн-конверсии: выгружено ${leads.length} заявок в Метрику (uploading id ${json.uploading.id}).`);
+    } else {
+      console.error('Метрика приняла не все строки CSV:', JSON.stringify(json));
+    }
+  } catch (err) {
+    console.error('Ошибка цикла выгрузки офлайн-конверсий:', err.message);
+  }
+}
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -98,7 +148,7 @@ async function backgroundRetryLoop() {
 }
 
 app.post('/api/leads', async (req, res) => {
-  const { name, phone, project, callTime } = req.body || {};
+  const { name, phone, project, callTime, yclid } = req.body || {};
 
   if (!name || !name.trim() || !phone || !phone.trim()) {
     return res.status(400).json({ ok: false, error: 'Укажите имя и телефон.' });
@@ -106,7 +156,7 @@ app.post('/api/leads', async (req, res) => {
 
   let leadId;
   try {
-    leadId = await appendLead({ name, phone, project, callTime, source: 'Сайт' });
+    leadId = await appendLead({ name, phone, project, callTime, source: 'Сайт', yclid });
     res.json({ ok: true });
   } catch (err) {
     console.error('Не удалось сохранить заявку в базу данных:', err.message);
@@ -120,6 +170,8 @@ ensureSchema()
   .then(() => {
     backgroundRetryLoop();
     setInterval(backgroundRetryLoop, RETRY_INTERVAL_MS);
+    uploadOfflineConversionsLoop();
+    setInterval(uploadOfflineConversionsLoop, METRIKA_UPLOAD_INTERVAL_MS);
   })
   .catch((err) => console.error('Не удалось подготовить схему БД:', err.message));
 

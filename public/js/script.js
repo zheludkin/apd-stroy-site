@@ -196,11 +196,23 @@ leadForm.addEventListener('submit', async (event) => {
     return;
   }
 
+  let yclid = null;
+  try {
+    const raw = localStorage.getItem('apd59-attribution');
+    if (raw) {
+      const attribution = JSON.parse(raw);
+      if (attribution.ts && Date.now() - attribution.ts <= 21 * 86400 * 1000) {
+        yclid = attribution.yclid || null;
+      }
+    }
+  } catch (e) {}
+
   const payload = {
     name,
     phone,
     project: document.getElementById('project').value,
     callTime: document.getElementById('callTime').value,
+    yclid,
   };
 
   submitBtn.disabled = true;

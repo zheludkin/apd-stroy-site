@@ -37,6 +37,27 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
+<!-- Attribution capture (yclid/utm): читает URL до согласия на cookie и без него — это не аналитика,
+     а просто параметр адресной строки, нужен для офлайн-конверсий в Метрику мимо cookie-баннера -->
+<script>
+(function () {
+  var KEY = 'apd59-attribution';
+  var TTL = 21 * 86400 * 1000;
+  var FIELDS = ['yclid', 'utm_source', 'utm_medium', 'utm_campaign'];
+  try {
+    var params = new URLSearchParams(location.search);
+    var hit = {};
+    FIELDS.forEach(function (k) {
+      var v = params.get(k);
+      if (v) hit[k] = v;
+    });
+    if (Object.keys(hit).length) {
+      hit.ts = Date.now();
+      localStorage.setItem(KEY, JSON.stringify(hit));
+    }
+  } catch (e) {}
+})();
+</script>
 <!-- Yandex.Metrika counter: загружается только после согласия на cookie, см. cookie-consent ниже -->
 <script type="text/javascript">
     function loadYandexMetrika() {
