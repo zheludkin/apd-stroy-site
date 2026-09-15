@@ -360,6 +360,116 @@ a {
   outline-offset: -3px;
 }
 
+/* Stats — соц. доказательство цифрами */
+.stats {
+  padding: 40px 0;
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--wood-light);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+  text-align: center;
+}
+
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-tile strong {
+  font-size: clamp(1.3rem, 3vw, 1.7rem);
+  color: var(--accent-dark);
+  font-weight: 800;
+}
+
+.stat-tile span {
+  font-size: 0.85rem;
+  color: var(--text-soft);
+}
+
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .stat-tile:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Offer — акцентная полоса с предложением */
+.offer {
+  padding: 28px 0;
+  background: var(--accent);
+}
+
+.offer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.offer-badge {
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.16);
+  padding: 6px 14px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.offer-text {
+  margin: 0;
+  color: var(--white);
+  font-weight: 600;
+  max-width: 560px;
+}
+
+.offer .btn-primary {
+  background: var(--white);
+  color: var(--accent-dark);
+  box-shadow: none;
+  flex-shrink: 0;
+}
+
+.offer .btn-primary:hover {
+  background: var(--wood-light);
+  color: var(--accent-dark);
+}
+
+/* Bank partners */
+.bank-partners {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--wood-light);
+}
+
+.bank-partners-label {
+  font-size: 0.82rem;
+  color: var(--text-soft);
+  margin-bottom: 14px;
+}
+
+.bank-partners-logos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 28px;
+}
+
+.bank-partners-logos img {
+  opacity: 0.85;
+}
+
 /* Calculator / quiz "Подберите свой дом" */
 .calc {
   padding: 72px 0;
