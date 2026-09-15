@@ -197,12 +197,44 @@ a {
   white-space: nowrap;
 }
 
+.header-telegram {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--white);
+  flex-shrink: 0;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.header-telegram:hover {
+  background: var(--accent-dark);
+  transform: translateY(-1px);
+}
+
+.header-telegram svg {
+  width: 19px;
+  height: 19px;
+}
+
 /* Hero */
 .hero {
-  padding: 72px 0 64px;
+  position: relative;
+  padding: 88px 0 72px;
+  background: #1f2a20 url('../images/gallery/real-04.jpg') center 65% / cover no-repeat;
+  isolation: isolate;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
   background:
-    radial-gradient(circle at 85% 15%, rgba(74, 120, 86, 0.12), transparent 55%),
-    linear-gradient(180deg, var(--bg-alt), var(--bg) 70%);
+    linear-gradient(180deg, rgba(20, 24, 16, 0.78) 0%, rgba(20, 24, 16, 0.72) 55%, rgba(20, 24, 16, 0.88) 100%);
 }
 
 .hero-inner {
@@ -211,25 +243,26 @@ a {
 }
 
 .hero h1 {
+  color: var(--white);
   font-size: clamp(1.6rem, 4vw, 2.5rem);
 }
 
 .hero-note {
   font-size: 0.8rem;
-  color: var(--text-soft);
-  opacity: 0.85;
+  color: rgba(255, 255, 255, 0.75);
   margin: 6px 0 0;
 }
 
 .hero-concept {
   font-size: 1.15rem;
   font-weight: 700;
-  color: var(--accent-dark);
+  color: var(--wood-light);
   margin-bottom: 0.8em;
 }
 
 .hero-lead {
   font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.92);
   margin-bottom: 2em;
 }
 
@@ -240,9 +273,26 @@ a {
   gap: 14px;
 }
 
-/* Why section */
+.hero .btn-outline {
+  color: var(--white);
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(20, 24, 16, 0.25);
+}
+
+.hero .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--white);
+}
+
+/* Why section — тёмная акцентная секция для ритма страницы */
 .why {
-  padding: 72px 0;
+  padding: 76px 0;
+  background: var(--wood-dark);
+}
+
+.why .section-title,
+.why .section-subtitle {
+  color: var(--white);
 }
 
 .why-grid {
@@ -252,18 +302,26 @@ a {
 }
 
 .why-card {
-  background: var(--white);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(232, 213, 186, 0.18);
   border-radius: var(--radius);
   padding: 32px 26px;
-  box-shadow: var(--shadow);
   text-align: center;
+}
+
+.why-card h3 {
+  color: var(--white);
+}
+
+.why-card p {
+  color: var(--wood-light);
 }
 
 .why-icon {
   width: 56px;
   height: 56px;
   margin: 0 auto 18px;
-  color: var(--accent);
+  color: var(--wood-light);
 }
 
 /* Gallery */
@@ -858,59 +916,156 @@ a {
   display: none;
 }
 
+/* Компактная карточка в левом нижнем углу — не перекрывает весь экран и не спорит с виджетом "на связи" справа */
 .cookie-banner {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
   z-index: 500;
-  background: var(--wood-dark);
-  color: var(--wood-light);
-  padding: 18px 20px;
+  max-width: 420px;
+  background: var(--white);
+  color: var(--text);
+  border: 1px solid var(--wood-light);
+  border-radius: 14px;
+  padding: 16px 18px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
-  box-shadow: 0 -12px 30px -14px rgba(46, 36, 25, 0.4);
+  gap: 12px;
+  box-shadow: var(--shadow);
 }
 
 .cookie-banner p {
   margin: 0;
-  max-width: 640px;
-  font-size: 0.9rem;
+  flex: 1 1 260px;
+  font-size: 0.8rem;
+  color: var(--text-soft);
 }
 
 .cookie-banner a {
-  color: var(--white);
+  color: var(--accent-dark);
   text-decoration: underline;
 }
 
 .cookie-banner-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .cookie-banner .btn {
-  padding: 10px 20px;
-  font-size: 0.9rem;
-}
-
-.cookie-banner .btn-outline {
-  color: var(--wood-light);
-  border-color: var(--wood-light);
-}
-
-.cookie-banner .btn-outline:hover {
-  background: rgba(232, 213, 186, 0.15);
-  border-color: var(--white);
-  color: var(--white);
+  padding: 8px 16px;
+  font-size: 0.82rem;
 }
 
 @media (max-width: 640px) {
   .cookie-banner {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    max-width: none;
     flex-direction: column;
+    align-items: stretch;
     text-align: center;
+  }
+
+  .cookie-banner-actions {
+    margin-left: 0;
+    justify-content: center;
+  }
+}
+
+/* Плавающий виджет "на связи" — живая точка контакта поверх всей страницы */
+.online-widget {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 480;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--white);
+  border-radius: 999px;
+  padding: 8px 18px 8px 8px;
+  box-shadow: 0 14px 34px -12px rgba(46, 36, 25, 0.45);
+  text-decoration: none;
+  color: var(--text);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.online-widget:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px -12px rgba(46, 36, 25, 0.55);
+}
+
+.online-widget-avatar {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.online-widget-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.online-widget-dot {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #3cb562;
+  border: 2px solid var(--white);
+  box-shadow: 0 0 0 0 rgba(60, 181, 98, 0.6);
+  animation: online-pulse 2.2s infinite;
+}
+
+@keyframes online-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(60, 181, 98, 0.55); }
+  70% { box-shadow: 0 0 0 8px rgba(60, 181, 98, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(60, 181, 98, 0); }
+}
+
+.online-widget-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.online-widget-status {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.online-widget-name {
+  font-size: 0.72rem;
+  color: var(--text-soft);
+}
+
+@media (max-width: 640px) {
+  .online-widget {
+    right: 10px;
+    bottom: 10px;
+    padding: 7px 14px 7px 7px;
+  }
+
+  .online-widget-avatar {
+    width: 38px;
+    height: 38px;
+  }
+
+  /* Пока виден cookie-баннер (первый визит), поднимаем виджет выше, чтобы не перекрывались */
+  body.has-cookie-banner .online-widget {
+    bottom: 168px;
   }
 }
