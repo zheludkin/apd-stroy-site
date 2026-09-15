@@ -155,6 +155,93 @@ lightbox.addEventListener('touchend', (event) => {
 
 const projectSelect = document.getElementById('project');
 
+/* Калькулятор "Подберите свой дом" */
+(function () {
+  const card = document.getElementById('calcCard');
+  if (!card) return;
+
+  const progressBar = document.getElementById('calcProgressBar');
+  const steps = Array.from(card.querySelectorAll('.calc-step'));
+  const resultStep = card.querySelector('.calc-result');
+  const totalSteps = steps.length;
+
+  const PROJECTS = {
+    '75': { title: '«Практик 75»', img: 'images/practik-75-exterior.png', area: '75 м²', price: '3 540 000 ₽', formValue: 'Практик 75' },
+    '75m': { title: '«Практик 75м»', img: 'images/practik-75m-plan.png', area: '75 м²', price: '3 540 000 ₽', formValue: 'Практик 75м' },
+    '90': { title: '«Практик 90»', img: 'images/practik-90-exterior.png', area: '90 м²', price: '3 950 000 ₽', formValue: 'Практик 90' },
+    '90m': { title: '«Практик 90м»', img: 'images/practik-90m-plan.png', area: '90 м²', price: '3 950 000 ₽', formValue: 'Практик 90м' },
+  };
+
+  let answers = {};
+
+  function setProgress(stepIndex) {
+    const pct = Math.round((stepIndex / (totalSteps + 1)) * 100);
+    progressBar.style.width = Math.max(pct, 8) + '%';
+  }
+
+  function showStep(index) {
+    steps.forEach((step, i) => { step.hidden = i !== index; });
+    resultStep.hidden = true;
+    setProgress(index);
+  }
+
+  function showResult() {
+    const key = answers.size + (answers.terrace || '');
+    const project = PROJECTS[key] || PROJECTS[answers.size];
+
+    document.getElementById('calcResultImg').src = project.img;
+    document.getElementById('calcResultImg').alt = project.title;
+    document.getElementById('calcResultTitle').textContent = project.title;
+    document.getElementById('calcResultArea').textContent = project.area;
+    document.getElementById('calcResultPrice').textContent = project.price;
+
+    const note = answers.mortgage === 'yes'
+      ? 'Подходит под семейную ипотеку — поможем с расчётом и документами.'
+      : 'Отличный выбор — рассчитаем удобный график оплаты.';
+    document.getElementById('calcResultNote').textContent = note;
+
+    const cta = document.getElementById('calcResultCta');
+    cta.onclick = () => {
+      projectSelect.value = project.formValue;
+    };
+
+    steps.forEach((step) => { step.hidden = true; });
+    resultStep.hidden = false;
+    progressBar.style.width = '100%';
+  }
+
+  card.addEventListener('click', (event) => {
+    const option = event.target.closest('.calc-option');
+    if (option) {
+      const step = option.closest('.calc-step');
+      const stepIndex = steps.indexOf(step);
+      const question = option.dataset.question;
+      const value = option.dataset.value;
+
+      step.querySelectorAll('.calc-option').forEach((btn) => btn.classList.remove('is-selected'));
+      option.classList.add('is-selected');
+      answers[question] = value;
+
+      window.setTimeout(() => {
+        if (stepIndex + 1 < totalSteps) {
+          showStep(stepIndex + 1);
+        } else {
+          showResult();
+        }
+      }, 220);
+      return;
+    }
+
+    if (event.target.id === 'calcRestart') {
+      answers = {};
+      steps.forEach((step) => step.querySelectorAll('.calc-option').forEach((btn) => btn.classList.remove('is-selected')));
+      showStep(0);
+    }
+  });
+
+  showStep(0);
+})();
+
 document.querySelectorAll('.js-choose-project').forEach((button) => {
   button.addEventListener('click', () => {
     const card = button.closest('.house-card');

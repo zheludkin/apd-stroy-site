@@ -118,6 +118,63 @@
     </div>
   </section>
 
+  <section class="calc" id="calc">
+    <div class="container calc-inner">
+      <h2 class="section-title">Подберите свой дом за 3 вопроса</h2>
+      <p class="section-subtitle">Быстро — минута. В конце покажем подходящий проект «Практик» и точную цену.</p>
+
+      <div class="calc-card" id="calcCard">
+        <div class="calc-progress"><div class="calc-progress-bar" id="calcProgressBar"></div></div>
+
+        <div class="calc-step" data-step="1">
+          <span class="calc-step-label">Вопрос 1 из 3</span>
+          <h3>Сколько человек будет жить в доме?</h3>
+          <div class="calc-options">
+            <button type="button" class="calc-option" data-question="size" data-value="75">2–3 человека</button>
+            <button type="button" class="calc-option" data-question="size" data-value="90">4 человека и больше</button>
+          </div>
+        </div>
+
+        <div class="calc-step" data-step="2" hidden>
+          <span class="calc-step-label">Вопрос 2 из 3</span>
+          <h3>Важна увеличенная терраса для отдыха на улице?</h3>
+          <div class="calc-options">
+            <button type="button" class="calc-option" data-question="terrace" data-value="m">Да, хочу террасу побольше</button>
+            <button type="button" class="calc-option" data-question="terrace" data-value="">Обычной террасы достаточно</button>
+          </div>
+        </div>
+
+        <div class="calc-step" data-step="3" hidden>
+          <span class="calc-step-label">Вопрос 3 из 3</span>
+          <h3>Планируете использовать семейную ипотеку?</h3>
+          <div class="calc-options">
+            <button type="button" class="calc-option" data-question="mortgage" data-value="yes">Да, интересует ипотека</button>
+            <button type="button" class="calc-option" data-question="mortgage" data-value="no">Нет, свои средства</button>
+          </div>
+        </div>
+
+        <div class="calc-result" data-step="result" hidden>
+          <span class="calc-step-label">Готово!</span>
+          <div class="calc-result-body">
+            <img id="calcResultImg" src="" alt="" width="140" height="105">
+            <div class="calc-result-info">
+              <h3 id="calcResultTitle"></h3>
+              <p id="calcResultNote"></p>
+              <ul class="house-stats">
+                <li><span>Площадь</span><strong id="calcResultArea"></strong></li>
+                <li><span>Цена</span><strong id="calcResultPrice"></strong></li>
+              </ul>
+              <div class="calc-result-actions">
+                <a href="#lead-form" class="btn btn-primary" id="calcResultCta">Оставить заявку на этот дом</a>
+                <button type="button" class="btn btn-outline" id="calcRestart">Пройти заново</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="catalog" id="catalog">
     <div class="container">
       <h2 class="section-title">Типовые проекты домов</h2>
@@ -193,6 +250,27 @@
           </div>
         </article>
 
+      </div>
+    </div>
+  </section>
+
+  <section class="videos" id="videos">
+    <div class="container">
+      <h2 class="section-title">Видео о наших проектах</h2>
+      <p class="section-subtitle">Короткие ролики о планировках «Практик-75» и «Практик-90» из нашего блога в соцсетях.</p>
+      <div class="videos-grid">
+        <article class="video-card">
+          <video controls preload="none" playsinline poster="videos/practik-75-promo-poster.jpg">
+            <source src="videos/practik-75-promo.mp4" type="video/mp4">
+          </video>
+          <p class="video-caption">«Практик 75» — компактный дом для семьи</p>
+        </article>
+        <article class="video-card">
+          <video controls preload="none" playsinline poster="videos/practik-90-promo-poster.jpg">
+            <source src="videos/practik-90-promo.mp4" type="video/mp4">
+          </video>
+          <p class="video-caption">«Практик 90» — просторный дом с террасой</p>
+        </article>
       </div>
     </div>
   </section>
