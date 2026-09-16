@@ -1,6 +1,7 @@
 require('dotenv').config();
 const path = require('path');
 const express = require('express');
+const { ProxyAgent } = require('undici');
 const {
   appendLead,
   getPool,
@@ -17,6 +18,17 @@ const {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Timeweb (ru-3) ненадёжно достаёт до api.telegram.org напрямую (см. память
+// apd-stroy-lead-instant-notify / apd-stroy-site-live-chat-relay). Если задан
+// TELEGRAM_PROXY_URL (http://user:pass@host:port или socks5://...) — все
+// запросы к Telegram API идут через него; если не задан — обычный прямой fetch,
+// поведение не меняется.
+const telegramProxyAgent = process.env.TELEGRAM_PROXY_URL ? new ProxyAgent(process.env.TELEGRAM_PROXY_URL) : null;
+
+function telegramFetch(url, options = {}) {
+  return fetch(url, telegramProxyAgent ? { ...options, dispatcher: telegramProxyAgent } : options);
+}
 
 // Сеть Timeweb до api.telegram.org нестабильна (fetch failed/ETIMEDOUT).
 // Быстрый путь (sendTelegramMessage) пробует сразу с короткими повторами;
@@ -97,7 +109,7 @@ async function sendTelegramMessage({ name, phone, project, callTime }) {
   const timeout = setTimeout(() => controller.abort(), 10000);
   let response;
   try {
-    response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    response = await telegramFetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text }),
@@ -176,7 +188,7 @@ async function sendChatMessageToGroup(text) {
   if (!token || !chatId) {
     throw new Error('TELEGRAM_BOT_TOKEN/TELEGRAM_GROUP_CHAT_ID не заданы');
   }
-  const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+  const response = await telegramFetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text }),
@@ -196,7 +208,7 @@ async function chatPollLoop() {
   try {
     const stored = await getBotState(CHAT_OFFSET_KEY);
     const offset = stored ? Number(stored) : 0;
-    const response = await fetch(
+    const response = await telegramFetch(
       `https://api.telegram.org/bot${token}/getUpdates?offset=${offset}&timeout=0&allowed_updates=["message"]`
     );
     const json = await response.json();
