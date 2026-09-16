@@ -412,17 +412,3 @@ ensureSchema()
 app.listen(PORT, () => {
   console.log(`АПД Строй сайт запущен: http://localhost:${PORT}`);
 });
-
-// ВРЕМЕННО (16.09.2026): диагностика — проверяем, доступен ли platform-api.max.ru
-// с Timeweb напрямую (в отличие от api.telegram.org). Убрать после проверки.
-(async () => {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch('https://platform-api.max.ru/', { signal: controller.signal });
-    clearTimeout(timeout);
-    console.log(`MAX API test: OK, status ${res.status}`);
-  } catch (err) {
-    console.error('MAX API test: FAILED —', err.message);
-  }
-})();
