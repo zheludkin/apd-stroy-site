@@ -176,6 +176,28 @@ a {
   font-weight: 500;
 }
 
+.header-banks {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.header-banks-label {
+  font-size: 0.75rem;
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+
+.header-banks img {
+  opacity: 0.85;
+}
+
+@media (max-width: 860px) {
+  .header-banks {
+    display: none;
+  }
+}
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -360,9 +382,9 @@ a {
   outline-offset: -3px;
 }
 
-/* Stats — верхняя полоса доверия (годы работы, кол-во домов, банки-партнёры) */
+/* Stats — тонкая полоса доверия (годы работы, кол-во домов) */
 .stats {
-  padding: 16px 0;
+  padding: 7px 0;
   background: var(--bg-alt);
   border-bottom: 1px solid var(--wood-light);
 }
@@ -371,15 +393,13 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 20px 36px;
 }
 
 .stats-grid {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 20px 32px;
+  gap: 8px 28px;
   text-align: center;
 }
 
@@ -392,65 +412,25 @@ a {
 }
 
 .stat-tile strong {
-  font-size: 1rem;
+  font-size: 0.88rem;
   color: var(--accent-dark);
   font-weight: 800;
 }
 
 .stat-tile span {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   color: var(--text-soft);
-}
-
-.stats-banks {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding-left: 36px;
-  border-left: 1px solid var(--wood-light);
-}
-
-.stats-banks-label {
-  font-size: 0.8rem;
-  color: var(--text-soft);
-  white-space: nowrap;
-}
-
-.stats-banks-logos {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-}
-
-.stats-banks-logos img {
-  opacity: 0.85;
 }
 
 @media (max-width: 720px) {
-  .stats-inner {
-    flex-direction: column;
-    gap: 12px;
+  .stats-grid {
+    gap: 4px 18px;
   }
 
   .stat-tile {
     white-space: normal;
     justify-content: center;
     text-align: center;
-  }
-
-  .stats-banks {
-    flex-direction: column;
-    padding-left: 0;
-    border-left: none;
-    padding-top: 12px;
-    border-top: 1px solid var(--wood-light);
-    width: 100%;
-    gap: 10px;
-  }
-
-  .stats-banks-logos {
-    flex-wrap: wrap;
-    justify-content: center;
   }
 }
 
@@ -851,8 +831,64 @@ a {
 }
 
 .mortgage-inner {
-  max-width: 700px;
+  max-width: 1040px;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 40px;
+  align-items: start;
+}
+
+.mortgage-text {
   text-align: center;
+}
+
+.mortgage-calc {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 28px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+
+.mortgage-calc h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--wood-dark);
+}
+
+.mortgage-calc-note {
+  font-size: 0.82rem;
+  margin: -6px 0 4px;
+}
+
+.mortgage-calc-result {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--bg-alt);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-top: 4px;
+}
+
+.mortgage-calc-result span {
+  font-size: 0.78rem;
+  color: var(--text-soft);
+}
+
+.mortgage-calc-result strong {
+  font-size: 1.5rem;
+  color: var(--accent-dark);
+}
+
+@media (max-width: 860px) {
+  .mortgage-inner {
+    grid-template-columns: 1fr;
+    max-width: 560px;
+  }
 }
 
 .mortgage-badge {

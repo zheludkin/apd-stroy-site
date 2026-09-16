@@ -91,14 +91,6 @@
         <span>гарантии на каждый дом</span>
       </div>
     </div>
-    <div class="stats-banks">
-      <span class="stats-banks-label">Банки-партнёры:</span>
-      <div class="stats-banks-logos">
-        <img src="images/banks/sberbank.svg" alt="Сбербанк" height="20">
-        <img src="images/banks/alfabank.svg" alt="Альфа-Банк" height="22">
-        <img src="images/banks/vtb.svg" alt="ВТБ" height="18">
-      </div>
-    </div>
   </div>
 </section>
 
@@ -111,6 +103,13 @@
         <span class="logo-subtitle">Архитектура Правильных Домов</span>
       </span>
     </a>
+
+    <div class="header-banks">
+      <span class="header-banks-label">Банки-партнёры:</span>
+      <img src="images/banks/sberbank.svg" alt="Сбербанк" height="18">
+      <img src="images/banks/alfabank.svg" alt="Альфа-Банк" height="20">
+      <img src="images/banks/vtb.svg" alt="ВТБ" height="16">
+    </div>
 
     <div class="header-actions">
       <a href="https://t.me/apd59_bot" target="_blank" rel="noopener" class="header-telegram" aria-label="Написать в Telegram">
@@ -393,7 +392,7 @@
           разобраться в условиях, сделает предварительный расчёт и подскажет,
           какие документы понадобятся.
         </p>
-        <a href="#lead-form" class="btn btn-primary">Рассчитать ипотеку для меня</a>
+        <a href="#mortgage-calc" class="btn btn-primary">Рассчитать ипотеку для меня</a>
 
         <div class="bank-partners">
           <p class="bank-partners-label">Оформляем ипотеку в банках-партнёрах:</p>
@@ -403,6 +402,41 @@
             <img src="images/banks/vtb.svg" alt="ВТБ" height="26">
           </div>
         </div>
+      </div>
+
+      <div class="mortgage-calc" id="mortgage-calc">
+        <h3>Калькулятор платежа</h3>
+        <p class="mortgage-calc-note">Посчитайте свой ежемесячный платёж — ориентировочно, точную ставку и условия подтвердит банк.</p>
+
+        <div class="form-row">
+          <label for="mcProject">Проект</label>
+          <select id="mcProject">
+            <option value="3540000">«Практик 75» — 3 540 000 ₽</option>
+            <option value="3950000">«Практик 90» — 3 950 000 ₽</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="mcDown">Первоначальный взнос, ₽</label>
+          <input type="number" id="mcDown" value="150000" min="0" step="10000">
+        </div>
+
+        <div class="form-row">
+          <label for="mcYears">Срок кредита, лет</label>
+          <input type="number" id="mcYears" value="20" min="1" max="30" step="1">
+        </div>
+
+        <div class="form-row">
+          <label for="mcRate">Ставка, % годовых</label>
+          <input type="number" id="mcRate" value="6" min="0" max="30" step="0.1">
+        </div>
+
+        <div class="mortgage-calc-result">
+          <span>Ежемесячный платёж</span>
+          <strong id="mcMonthly">— ₽</strong>
+        </div>
+
+        <a href="#lead-form" class="btn btn-outline btn-block">Оставить заявку на этот расчёт</a>
       </div>
     </div>
   </section>

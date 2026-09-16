@@ -336,3 +336,45 @@ document.querySelectorAll('a[href^="tel:"]').forEach((link) => {
     if (typeof ym === 'function') ym(111213103, 'reachGoal', 'phone_click');
   });
 });
+
+(function () {
+  const projectSelect = document.getElementById('mcProject');
+  const downInput = document.getElementById('mcDown');
+  const yearsInput = document.getElementById('mcYears');
+  const rateInput = document.getElementById('mcRate');
+  const resultEl = document.getElementById('mcMonthly');
+  if (!projectSelect || !downInput || !yearsInput || !rateInput || !resultEl) return;
+
+  function calcMortgage() {
+    const price = Number(projectSelect.value) || 0;
+    const down = Number(downInput.value) || 0;
+    const years = Number(yearsInput.value) || 0;
+    const rate = Number(rateInput.value) || 0;
+
+    const principal = Math.max(price - down, 0);
+    const n = years * 12;
+    const monthlyRate = rate / 100 / 12;
+
+    if (n <= 0 || principal <= 0) {
+      resultEl.textContent = '— ₽';
+      return;
+    }
+
+    let payment;
+    if (monthlyRate === 0) {
+      payment = principal / n;
+    } else {
+      const factor = Math.pow(1 + monthlyRate, n);
+      payment = (principal * monthlyRate * factor) / (factor - 1);
+    }
+
+    resultEl.textContent = Math.round(payment).toLocaleString('ru-RU') + ' ₽/мес';
+  }
+
+  [projectSelect, downInput, yearsInput, rateInput].forEach((el) => {
+    el.addEventListener('input', calcMortgage);
+    el.addEventListener('change', calcMortgage);
+  });
+
+  calcMortgage();
+})();
