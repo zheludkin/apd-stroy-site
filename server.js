@@ -292,7 +292,13 @@ app.post('/api/leads', async (req, res) => {
   notifyTelegramGroup({ id: leadId, name, phone, project, callTime });
 });
 
-const CHAT_POLL_INTERVAL_MS = 4000;
+// chatPollLoop() (getUpdates) НЕ запускается отсюда — Timeweb (ru-3) ненадёжно
+// достаёт до api.telegram.org (см. коммит-сообщение и apd-stroy-lead-instant-notify).
+// Ответы менеджера забирает apd-stroy-bot/local_chat_relay.js с локальной машины
+// (раз в минуту, тот же паттерн, что и для заявок). Если сеть Timeweb когда-нибудь
+// починится — можно вернуть chatPollLoop() в этот интервал, конфликта с локальным
+// relay не будет, т.к. оба читают/пишут смещение (offset) независимо, но ЛУЧШЕ
+// оставить только один активный consumer getUpdates на этот токен.
 
 ensureSchema()
   .then(() => {
@@ -300,8 +306,6 @@ ensureSchema()
     setInterval(backgroundRetryLoop, RETRY_INTERVAL_MS);
     uploadOfflineConversionsLoop();
     setInterval(uploadOfflineConversionsLoop, METRIKA_UPLOAD_INTERVAL_MS);
-    chatPollLoop();
-    setInterval(chatPollLoop, CHAT_POLL_INTERVAL_MS);
   })
   .catch((err) => console.error('Не удалось подготовить схему БД:', err.message));
 
