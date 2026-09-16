@@ -505,27 +505,37 @@ a {
 
 /* Calculator / quiz "Подберите свой дом" */
 .calc {
-  padding: 72px 0;
+  padding: 40px 0;
+}
+
+.calc .section-title {
+  font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+  margin-bottom: 0.3em;
+}
+
+.calc .section-subtitle {
+  margin-bottom: 1.4em;
+  font-size: 0.9rem;
 }
 
 .calc-inner {
-  max-width: 640px;
+  max-width: 520px;
 }
 
 .calc-card {
   background: var(--white);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 36px 32px;
+  padding: 22px 20px;
   position: relative;
   overflow: hidden;
 }
 
 .calc-progress {
-  height: 6px;
+  height: 5px;
   border-radius: 999px;
   background: var(--wood-light);
-  margin-bottom: 26px;
+  margin-bottom: 16px;
   overflow: hidden;
 }
 
@@ -539,33 +549,33 @@ a {
 
 .calc-step-label {
   display: inline-block;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--accent-dark);
   background: var(--bg-alt);
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 999px;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .calc-step h3 {
-  font-size: 1.25rem;
-  margin-bottom: 20px;
+  font-size: 1.05rem;
+  margin-bottom: 12px;
 }
 
 .calc-options {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .calc-option {
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 0.92rem;
   font-weight: 700;
   text-align: left;
-  padding: 16px 20px;
-  border-radius: 12px;
+  padding: 11px 16px;
+  border-radius: 10px;
   border: 2px solid var(--wood-light);
   background: var(--bg);
   color: var(--wood-dark);
@@ -593,10 +603,10 @@ a {
 }
 
 .calc-result-body img {
-  width: 140px;
-  height: 105px;
+  width: 116px;
+  height: 87px;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 10px;
   flex-shrink: 0;
   background: var(--wood-light);
 }
@@ -611,19 +621,13 @@ a {
 }
 
 .calc-result-info .house-stats {
-  margin: 12px 0 18px;
+  margin: 8px 0 12px;
 }
 
 .calc-result-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-}
-
-@media (max-width: 640px) {
-  .calc-card {
-    padding: 26px 20px;
-  }
 }
 
 /* Videos */
