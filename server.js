@@ -220,13 +220,76 @@ async function notifyEmail(lead, { attempts = 3 } = {}) {
   return false;
 }
 
+// Дублирование заявок в MAX (российский мессенджер) — в отличие от api.telegram.org,
+// platform-api2.max.ru доступен с Timeweb напрямую (см. память apd-stroy-site-live-chat-relay).
+// Требует NODE_EXTRA_CA_CERTS (см. certs/russian_trusted_ca_bundle.crt) — MAX использует
+// TLS-сертификат от НУЦ Минцифры, без него будет UNABLE_TO_GET_ISSUER_CERT_LOCALLY.
+async function sendMaxMessage({ name, phone, project, callTime }) {
+  const token = process.env.MAX_BOT_TOKEN;
+  const chatId = process.env.MAX_CHAT_ID;
+  if (!token || !chatId) {
+    throw new Error('MAX_BOT_TOKEN/MAX_CHAT_ID не заданы');
+  }
+
+  const text =
+    `🆕 Новая заявка (Сайт)\n` +
+    `Имя: ${name}\n` +
+    `Телефон: ${phone}\n` +
+    `Проект: ${project || '—'}\n` +
+    `Удобное время звонка: ${callTime || '—'}`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  let response;
+  try {
+    response = await fetch(`https://platform-api2.max.ru/messages?chat_id=${chatId}`, {
+      method: 'POST',
+      headers: { Authorization: token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`MAX sendMessage ${response.status}: ${body}`);
+  }
+}
+
+async function notifyMaxChat(lead, { attempts = 3 } = {}) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      await sendMaxMessage(lead);
+      if (lead.id) {
+        await getPool().query('UPDATE leads SET max_notified_at = now() WHERE id = $1', [lead.id]);
+      }
+      return true;
+    } catch (err) {
+      lastError = err;
+      console.error(`Попытка ${attempt}/${attempts} отправки в MAX не удалась:`, err.message);
+      if (attempt < attempts) {
+        await new Promise((r) => setTimeout(r, attempt * 2000));
+      }
+    }
+  }
+  console.error('Быстрый путь MAX исчерпан, заявка уйдёт в фоновый цикл повторов:', lastError?.message);
+  return false;
+}
+
 async function backgroundRetryLoop() {
   try {
     const { rows } = await getPool().query(
-      `SELECT id, name, phone, project, call_time AS "callTime", notified_at, emailed_at
+      `SELECT id, name, phone, project, call_time AS "callTime", notified_at, emailed_at, max_notified_at
        FROM leads
        WHERE source = 'Сайт'
-         AND ((notified_at IS NULL AND notify_attempts < $1) OR (emailed_at IS NULL AND email_attempts < $1))
+         AND (
+           (notified_at IS NULL AND notify_attempts < $1)
+           OR (emailed_at IS NULL AND email_attempts < $1)
+           OR (max_notified_at IS NULL AND max_notify_attempts < $1)
+         )
        ORDER BY id ASC`,
       [RETRY_LIMIT]
     );
@@ -250,6 +313,16 @@ async function backgroundRetryLoop() {
           console.log(`Фоновый повтор: заявка #${lead.id} отправлена на email.`);
         } catch (err) {
           console.error(`Фоновый повтор: заявка #${lead.id} — email попытка не удалась —`, err.message);
+        }
+      }
+      if (!lead.max_notified_at) {
+        await getPool().query('UPDATE leads SET max_notify_attempts = max_notify_attempts + 1 WHERE id = $1', [lead.id]);
+        try {
+          await sendMaxMessage(lead);
+          await getPool().query('UPDATE leads SET max_notified_at = now() WHERE id = $1', [lead.id]);
+          console.log(`Фоновый повтор: заявка #${lead.id} отправлена в MAX.`);
+        } catch (err) {
+          console.error(`Фоновый повтор: заявка #${lead.id} — MAX попытка не удалась —`, err.message);
         }
       }
     }
@@ -390,6 +463,7 @@ app.post('/api/leads', async (req, res) => {
 
   notifyTelegramGroup({ id: leadId, name, phone, project, callTime });
   notifyEmail({ id: leadId, name, phone, project, callTime });
+  notifyMaxChat({ id: leadId, name, phone, project, callTime });
 });
 
 // chatPollLoop() (getUpdates) НЕ запускается отсюда — Timeweb (ru-3) ненадёжно
