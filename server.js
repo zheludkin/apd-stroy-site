@@ -13,6 +13,7 @@ const {
   setChatMessageTelegramId,
   getChatMessagesSince,
   findVisitorByTelegramMessageId,
+  getLastActiveVisitorId,
   getBotState,
   setBotState,
 } = require('./lib/db');
@@ -38,6 +39,9 @@ function telegramFetch(url, options = {}) {
 // пока запущен процесс на Timeweb, без зависимости от локального компьютера.
 const RETRY_LIMIT = 96; // ~48 часов добивания при интервале фонового цикла 30 минут
 const RETRY_INTERVAL_MS = 30 * 60 * 1000;
+
+// MAX доступен с Timeweb напрямую — опрашиваем каждые 4 сек, без локального relay.
+const MAX_CHAT_POLL_INTERVAL_MS = 4000;
 
 // Офлайн-конверсии в Яндекс.Метрику по yclid — обходят cookie-баннер (152-ФЗ),
 // т.к. Метрика на сайте грузится только после согласия, а yclid ловится ДО него
@@ -400,6 +404,71 @@ async function chatPollLoop() {
   }
 }
 
+// Живой чат через MAX — работает напрямую с Timeweb, без локального relay
+// (в отличие от Telegram-ветки выше). MAX не отдаёт в апдейтах, на какое
+// сообщение отвечает менеджер, поэтому по решению пользователя (16.09.2026)
+// ответ маршрутизируется ПОСЛЕДНЕМУ НАПИСАВШЕМУ посетителю (getLastActiveVisitorId),
+// без тегов — простая и предсказуемая логика для сайта с низким трафиком чата.
+const MAX_CHAT_MARKER_KEY = 'max_chat_marker';
+let maxChatPolling = false;
+
+async function sendMaxChatMessage(text) {
+  const token = process.env.MAX_BOT_TOKEN;
+  const chatId = process.env.MAX_CHAT_ID;
+  if (!token || !chatId) {
+    throw new Error('MAX_BOT_TOKEN/MAX_CHAT_ID не заданы');
+  }
+  const response = await fetch(`https://platform-api2.max.ru/messages?chat_id=${chatId}`, {
+    method: 'POST',
+    headers: { Authorization: token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`MAX sendMessage ${response.status}: ${body}`);
+  }
+}
+
+async function maxChatPollLoop() {
+  const token = process.env.MAX_BOT_TOKEN;
+  const chatId = process.env.MAX_CHAT_ID;
+  if (!token || !chatId || maxChatPolling) return;
+  maxChatPolling = true;
+  try {
+    const stored = await getBotState(MAX_CHAT_MARKER_KEY);
+    const url = stored
+      ? `https://platform-api2.max.ru/updates?marker=${stored}`
+      : `https://platform-api2.max.ru/updates`;
+    const response = await fetch(url, { headers: { Authorization: token } });
+    const json = await response.json();
+    if (!response.ok) {
+      console.error('MAX-чат: /updates вернул ошибку:', JSON.stringify(json));
+      return;
+    }
+
+    for (const update of json.updates || []) {
+      if (update.update_type !== 'message_created') continue;
+      const message = update.message;
+      if (!message || !message.body || !message.body.text) continue;
+      if (String(message.recipient.chat_id) !== String(chatId)) continue;
+      if (message.sender && message.sender.is_bot) continue;
+
+      const visitorId = await getLastActiveVisitorId();
+      if (!visitorId) continue;
+
+      await insertChatMessage({ visitorId, direction: 'manager', text: message.body.text });
+    }
+
+    if (json.marker) {
+      await setBotState(MAX_CHAT_MARKER_KEY, String(json.marker));
+    }
+  } catch (err) {
+    console.error('MAX-чат: цикл опроса упал:', err.message);
+  } finally {
+    maxChatPolling = false;
+  }
+}
+
 app.post('/api/chat/send', async (req, res) => {
   const { visitorId, text } = req.body || {};
   const trimmed = (text || '').trim();
@@ -424,6 +493,12 @@ app.post('/api/chat/send', async (req, res) => {
       await setChatMessageTelegramId(saved.id, telegramMessageId);
     } catch (err) {
       console.error('Чат: не удалось переслать сообщение в Telegram:', err.message);
+    }
+
+    try {
+      await sendMaxChatMessage(`💬 Вопрос с сайта:\n${trimmed}`);
+    } catch (err) {
+      console.error('Чат: не удалось переслать сообщение в MAX:', err.message);
     }
   } catch (err) {
     console.error('Чат: не удалось сохранить сообщение:', err.message);
@@ -480,6 +555,8 @@ ensureSchema()
     setInterval(backgroundRetryLoop, RETRY_INTERVAL_MS);
     uploadOfflineConversionsLoop();
     setInterval(uploadOfflineConversionsLoop, METRIKA_UPLOAD_INTERVAL_MS);
+    maxChatPollLoop();
+    setInterval(maxChatPollLoop, MAX_CHAT_POLL_INTERVAL_MS);
   })
   .catch((err) => console.error('Не удалось подготовить схему БД:', err.message));
 
