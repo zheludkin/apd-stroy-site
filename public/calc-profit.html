@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Калькулятор прибыли — АПД Строй (внутренний)</title>
+<style>
+  :root {
+    --bg: #faf6ef;
+    --bg-alt: #f2e9da;
+    --wood-dark: #5c3a24;
+    --wood-light: #e8d5ba;
+    --accent: #4a7856;
+    --accent-dark: #345940;
+    --text: #2e2419;
+    --text-soft: #6b5c4c;
+    --red: #b3423a;
+    --white: #ffffff;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 20px 14px 60px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; color: var(--wood-dark); }
+  .subtitle { color: var(--text-soft); font-size: 0.9rem; margin: 0 0 20px; }
+  .badge {
+    display: inline-block;
+    background: var(--wood-light);
+    color: var(--wood-dark);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+  }
+
+  .card {
+    background: var(--white);
+    border: 1px solid var(--wood-light);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 18px;
+  }
+  .card h2 {
+    font-size: 1rem;
+    margin: 0 0 12px;
+    color: var(--wood-dark);
+  }
+
+  .assumptions {
+    background: var(--bg-alt);
+    border: 1px solid var(--wood-light);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    color: var(--text-soft);
+    margin-bottom: 18px;
+  }
+  .assumptions strong { color: var(--text); }
+
+  .globals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+  }
+  .field label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-soft);
+    margin-bottom: 4px;
+  }
+  .field input {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--wood-light);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .field input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { padding: 8px 6px; text-align: right; white-space: nowrap; }
+  th { color: var(--text-soft); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.02em; border-bottom: 2px solid var(--wood-light); }
+  td:first-child, th:first-child { text-align: left; }
+  tbody tr { border-bottom: 1px solid var(--wood-light); }
+  tbody tr:last-child { border-bottom: none; }
+  td input {
+    width: 92px;
+    padding: 6px 7px;
+    border: 1px solid var(--wood-light);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    text-align: right;
+    background: var(--bg);
+  }
+  td input.qty { width: 56px; text-align: center; }
+  td input.empty-cost { border-color: var(--red); background: #fdf1ef; }
+  .profit-cell { font-weight: 700; }
+  .profit-pos { color: var(--accent-dark); }
+  .profit-neg { color: var(--red); }
+  .muted { color: var(--text-soft); font-weight: 400; }
+
+  tfoot td { font-weight: 700; border-top: 2px solid var(--wood-dark); padding-top: 12px; }
+  tfoot tr td:first-child { text-align: left; }
+
+  .totals {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .total-tile {
+    background: var(--bg-alt);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .total-tile span { display: block; font-size: 0.75rem; color: var(--text-soft); margin-bottom: 4px; }
+  .total-tile strong { font-size: 1.3rem; color: var(--wood-dark); }
+  .total-tile.highlight { background: var(--accent); }
+  .total-tile.highlight span { color: rgba(255,255,255,0.85); }
+  .total-tile.highlight strong { color: var(--white); }
+  .total-tile.highlight.neg { background: var(--red); }
+
+  .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+  .btn {
+    padding: 9px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--wood-light);
+    background: var(--white);
+    color: var(--text);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn:hover { background: var(--wood-light); }
+
+  .table-scroll { overflow-x: auto; }
+
+  @media (max-width: 640px) {
+    td input { width: 76px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="badge">Внутренний инструмент — не для клиентов</span>
+  <h1>Калькулятор прибыли по проектам</h1>
+  <p class="subtitle">Себестоимость + цена продажи по типовым проектам, переменные расходы на участок/скважину/канализацию и налог УСН 6% — считаем прибыль по партии домов.</p>
+
+  <div class="assumptions">
+    <strong>Допущения по умолчанию</strong> (можно менять ниже под каждый расчёт):
+    участок ≈ 500 000 ₽ на дом, скважина + канализация ≈ 300 000 ₽ на дом, налог УСН 6% от выручки.
+    Себестоимость по проектам не заполнена — впишите свои реальные цифры (поля с красной рамкой).
+  </div>
+
+  <div class="card">
+    <h2>Общие параметры</h2>
+    <div class="globals-grid">
+      <div class="field">
+        <label for="landCost">Участок на дом, ₽</label>
+        <input type="number" id="landCost" value="500000" step="10000">
+      </div>
+      <div class="field">
+        <label for="utilCost">Скважина + канализация на дом, ₽</label>
+        <input type="number" id="utilCost" value="300000" step="10000">
+      </div>
+      <div class="field">
+        <label for="taxRate">Налог (УСН, % от выручки)</label>
+        <input type="number" id="taxRate" value="6" step="0.5" min="0" max="100">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Проекты</h2>
+    <div class="table-scroll">
+      <table id="projectsTable">
+        <thead>
+          <tr>
+            <th>Проект</th>
+            <th>Кол-во</th>
+            <th>Себестоимость, ₽</th>
+            <th>Цена продажи, ₽</th>
+            <th>Выручка</th>
+            <th>Расходы всего</th>
+            <th>Налог</th>
+            <th>Прибыль</th>
+            <th>Маржа</th>
+          </tr>
+        </thead>
+        <tbody id="projectsBody"></tbody>
+        <tfoot>
+          <tr>
+            <td>Итого</td>
+            <td id="totQty">0</td>
+            <td class="muted">—</td>
+            <td class="muted">—</td>
+            <td id="totRevenue">0 ₽</td>
+            <td id="totCost">0 ₽</td>
+            <td id="totTax">0 ₽</td>
+            <td id="totProfit" class="profit-cell">0 ₽</td>
+            <td id="totMargin">0%</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="totals">
+      <div class="total-tile">
+        <span>Домов в расчёте</span>
+        <strong id="tileQty">0</strong>
+      </div>
+      <div class="total-tile">
+        <span>Выручка</span>
+        <strong id="tileRevenue">0 ₽</strong>
+      </div>
+      <div class="total-tile">
+        <span>Расходы + налог</span>
+        <strong id="tileCosts">0 ₽</strong>
+      </div>
+      <div class="total-tile highlight" id="tileProfitBox">
+        <span>Чистая прибыль</span>
+        <strong id="tileProfit">0 ₽</strong>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="resetBtn" type="button">Сбросить к значениям по умолчанию</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var STORAGE_KEY = 'apd59-profit-calc-v1';
+
+  var DEFAULT_PROJECTS = [
+    { id: 'p75', name: '«Практик 75»', qty: 0, cost: null, price: 3540000 },
+    { id: 'p75m', name: '«Практик 75м»', qty: 0, cost: null, price: 3540000 },
+    { id: 'p90', name: '«Практик 90»', qty: 0, cost: null, price: 3950000 },
+    { id: 'p90m', name: '«Практик 90м»', qty: 0, cost: null, price: 3950000 },
+  ];
+
+  var DEFAULT_STATE = {
+    landCost: 500000,
+    utilCost: 300000,
+    taxRate: 6,
+    projects: DEFAULT_PROJECTS,
+  };
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return clone(DEFAULT_STATE);
+      var parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.projects)) return clone(DEFAULT_STATE);
+      // На случай, если в будущем добавятся новые проекты — сливаем с дефолтами по id.
+      var merged = DEFAULT_PROJECTS.map(function (def) {
+        var found = parsed.projects.find(function (p) { return p.id === def.id; });
+        return found ? Object.assign({}, def, found) : clone(def);
+      });
+      return {
+        landCost: numOr(parsed.landCost, DEFAULT_STATE.landCost),
+        utilCost: numOr(parsed.utilCost, DEFAULT_STATE.utilCost),
+        taxRate: numOr(parsed.taxRate, DEFAULT_STATE.taxRate),
+        projects: merged,
+      };
+    } catch (e) {
+      return clone(DEFAULT_STATE);
+    }
+  }
+
+  function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
+  function numOr(v, fallback) { return (typeof v === 'number' && !isNaN(v)) ? v : fallback; }
+
+  function saveState() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function fmtMoney(n) {
+    var sign = n < 0 ? '−' : '';
+    return sign + Math.round(Math.abs(n)).toLocaleString('ru-RU') + ' ₽';
+  }
+
+  var state = loadState();
+
+  var tbody = document.getElementById('projectsBody');
+  var landCostInput = document.getElementById('landCost');
+  var utilCostInput = document.getElementById('utilCost');
+  var taxRateInput = document.getElementById('taxRate');
+
+  landCostInput.value = state.landCost;
+  utilCostInput.value = state.utilCost;
+  taxRateInput.value = state.taxRate;
+
+  function buildRows() {
+    tbody.innerHTML = '';
+    state.projects.forEach(function (proj, idx) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + proj.name + '</td>' +
+        '<td><input class="qty" type="number" min="0" step="1" data-field="qty" data-idx="' + idx + '" value="' + proj.qty + '"></td>' +
+        '<td><input type="number" min="0" step="10000" data-field="cost" data-idx="' + idx + '" value="' + (proj.cost === null ? '' : proj.cost) + '" placeholder="напр. 2500000"></td>' +
+        '<td><input type="number" min="0" step="10000" data-field="price" data-idx="' + idx + '" value="' + proj.price + '"></td>' +
+        '<td class="revenue-cell">—</td>' +
+        '<td class="cost-cell">—</td>' +
+        '<td class="tax-cell">—</td>' +
+        '<td class="profit-cell">—</td>' +
+        '<td class="margin-cell">—</td>';
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('input').forEach(function (input) {
+      input.addEventListener('input', onFieldInput);
+    });
+  }
+
+  function onFieldInput(e) {
+    var idx = Number(e.target.dataset.idx);
+    var field = e.target.dataset.field;
+    var raw = e.target.value;
+    var val = raw === '' ? (field === 'cost' ? null : 0) : Number(raw);
+    state.projects[idx][field] = val;
+    saveState();
+    recalc();
+  }
+
+  landCostInput.addEventListener('input', function () {
+    state.landCost = Number(landCostInput.value) || 0;
+    saveState();
+    recalc();
+  });
+  utilCostInput.addEventListener('input', function () {
+    state.utilCost = Number(utilCostInput.value) || 0;
+    saveState();
+    recalc();
+  });
+  taxRateInput.addEventListener('input', function () {
+    state.taxRate = Number(taxRateInput.value) || 0;
+    saveState();
+    recalc();
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', function () {
+    if (!confirm('Сбросить все значения к настройкам по умолчанию? Сохранённый расчёт будет удалён.')) return;
+    state = clone(DEFAULT_STATE);
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    landCostInput.value = state.landCost;
+    utilCostInput.value = state.utilCost;
+    taxRateInput.value = state.taxRate;
+    buildRows();
+    recalc();
+  });
+
+  function recalc() {
+    var rows = tbody.querySelectorAll('tr');
+    var totQty = 0, totRevenue = 0, totCost = 0, totTax = 0, totProfit = 0;
+
+    state.projects.forEach(function (proj, idx) {
+      var qty = proj.qty || 0;
+      var cost = proj.cost === null ? 0 : proj.cost;
+      var price = proj.price || 0;
+
+      var revenue = qty * price;
+      var variableCosts = qty * (cost + state.landCost + state.utilCost);
+      var tax = revenue * (state.taxRate / 100);
+      var profit = revenue - variableCosts - tax;
+      var margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+
+      var row = rows[idx];
+      row.querySelector('.revenue-cell').textContent = fmtMoney(revenue);
+      row.querySelector('.cost-cell').textContent = fmtMoney(variableCosts);
+      row.querySelector('.tax-cell').textContent = fmtMoney(tax);
+      var profitCell = row.querySelector('.profit-cell');
+      profitCell.textContent = fmtMoney(profit);
+      profitCell.className = 'profit-cell ' + (profit >= 0 ? 'profit-pos' : 'profit-neg');
+      row.querySelector('.margin-cell').textContent = margin.toFixed(1) + '%';
+
+      var costInput = row.querySelector('input[data-field="cost"]');
+      if (proj.cost === null || proj.cost === 0) {
+        costInput.classList.add('empty-cost');
+      } else {
+        costInput.classList.remove('empty-cost');
+      }
+
+      totQty += qty;
+      totRevenue += revenue;
+      totCost += variableCosts;
+      totTax += tax;
+      totProfit += profit;
+    });
+
+    var totMargin = totRevenue > 0 ? (totProfit / totRevenue) * 100 : 0;
+
+    document.getElementById('totQty').textContent = totQty;
+    document.getElementById('totRevenue').textContent = fmtMoney(totRevenue);
+    document.getElementById('totCost').textContent = fmtMoney(totCost);
+    document.getElementById('totTax').textContent = fmtMoney(totTax);
+    var totProfitCell = document.getElementById('totProfit');
+    totProfitCell.textContent = fmtMoney(totProfit);
+    totProfitCell.className = 'profit-cell ' + (totProfit >= 0 ? 'profit-pos' : 'profit-neg');
+    document.getElementById('totMargin').textContent = totMargin.toFixed(1) + '%';
+
+    document.getElementById('tileQty').textContent = totQty;
+    document.getElementById('tileRevenue').textContent = fmtMoney(totRevenue);
+    document.getElementById('tileCosts').textContent = fmtMoney(totCost + totTax);
+    document.getElementById('tileProfit').textContent = fmtMoney(totProfit);
+    var profitBox = document.getElementById('tileProfitBox');
+    profitBox.classList.toggle('neg', totProfit < 0);
+  }
+
+  buildRows();
+  recalc();
+})();
+</script>
+</body>
+</html>
