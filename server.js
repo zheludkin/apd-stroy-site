@@ -1,7 +1,19 @@
 require('dotenv').config();
 const path = require('path');
 const express = require('express');
-const { appendLead, getPool, ensureSchema, getLeadsPendingMetrikaUpload, markMetrikaUploaded } = require('./lib/db');
+const {
+  appendLead,
+  getPool,
+  ensureSchema,
+  getLeadsPendingMetrikaUpload,
+  markMetrikaUploaded,
+  insertChatMessage,
+  setChatMessageTelegramId,
+  getChatMessagesSince,
+  findVisitorByTelegramMessageId,
+  getBotState,
+  setBotState,
+} = require('./lib/db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -147,6 +159,120 @@ async function backgroundRetryLoop() {
   }
 }
 
+// Живой чат на сайте: сообщения посетителя летят в тот же Telegram-канал,
+// куда падают уведомления о заявках (TELEGRAM_BOT_TOKEN/TELEGRAM_GROUP_CHAT_ID).
+// Менеджер отвечает через Reply на сообщение в группе — бот вычленяет
+// visitor_id по telegram_message_id (см. chat_messages) и long-polling'ом
+// (getUpdates) забирает ответ обратно на сайт. Это НЕ тот же бот, что
+// apd-stroy-bot (там своя Telegraf-сессия и long polling на другом токене) —
+// делать так же на TELEGRAM_BOT_TOKEN apd-stroy-bot нельзя, будет конфликт
+// (см. память apd-stroy-telegram-bridge-duplicate-conflict).
+const CHAT_OFFSET_KEY = 'chat_update_offset';
+let chatPolling = false;
+
+async function sendChatMessageToGroup(text) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_GROUP_CHAT_ID;
+  if (!token || !chatId) {
+    throw new Error('TELEGRAM_BOT_TOKEN/TELEGRAM_GROUP_CHAT_ID не заданы');
+  }
+  const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text }),
+  });
+  const json = await response.json();
+  if (!response.ok || !json.ok) {
+    throw new Error(`Telegram sendMessage ${response.status}: ${JSON.stringify(json)}`);
+  }
+  return json.result.message_id;
+}
+
+async function chatPollLoop() {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const groupChatId = process.env.TELEGRAM_GROUP_CHAT_ID;
+  if (!token || !groupChatId || chatPolling) return;
+  chatPolling = true;
+  try {
+    const stored = await getBotState(CHAT_OFFSET_KEY);
+    const offset = stored ? Number(stored) : 0;
+    const response = await fetch(
+      `https://api.telegram.org/bot${token}/getUpdates?offset=${offset}&timeout=0&allowed_updates=["message"]`
+    );
+    const json = await response.json();
+    if (!json.ok) {
+      console.error('Чат: getUpdates вернул ошибку:', JSON.stringify(json));
+      return;
+    }
+
+    let maxUpdateId = offset - 1;
+    for (const update of json.result) {
+      if (update.update_id > maxUpdateId) maxUpdateId = update.update_id;
+      const message = update.message;
+      if (!message || !message.reply_to_message || !message.text) continue;
+      if (String(message.chat.id) !== String(groupChatId)) continue;
+
+      const visitorId = await findVisitorByTelegramMessageId(message.reply_to_message.message_id);
+      if (!visitorId) continue;
+
+      await insertChatMessage({ visitorId, direction: 'manager', text: message.text });
+    }
+
+    if (maxUpdateId >= offset) {
+      await setBotState(CHAT_OFFSET_KEY, String(maxUpdateId + 1));
+    }
+  } catch (err) {
+    console.error('Чат: цикл опроса Telegram упал:', err.message);
+  } finally {
+    chatPolling = false;
+  }
+}
+
+app.post('/api/chat/send', async (req, res) => {
+  const { visitorId, text } = req.body || {};
+  const trimmed = (text || '').trim();
+
+  if (!visitorId || typeof visitorId !== 'string' || visitorId.length > 100) {
+    return res.status(400).json({ ok: false, error: 'Некорректный visitorId.' });
+  }
+  if (!trimmed) {
+    return res.status(400).json({ ok: false, error: 'Пустое сообщение.' });
+  }
+  if (trimmed.length > 2000) {
+    return res.status(400).json({ ok: false, error: 'Сообщение слишком длинное.' });
+  }
+
+  try {
+    const saved = await insertChatMessage({ visitorId, direction: 'visitor', text: trimmed });
+    res.json({ ok: true, id: saved.id });
+
+    try {
+      const shortId = visitorId.slice(0, 6).toUpperCase();
+      const telegramMessageId = await sendChatMessageToGroup(`💬 Вопрос с сайта (#${shortId}):\n${trimmed}`);
+      await setChatMessageTelegramId(saved.id, telegramMessageId);
+    } catch (err) {
+      console.error('Чат: не удалось переслать сообщение в Telegram:', err.message);
+    }
+  } catch (err) {
+    console.error('Чат: не удалось сохранить сообщение:', err.message);
+    res.status(500).json({ ok: false, error: 'Не удалось отправить сообщение. Попробуйте ещё раз.' });
+  }
+});
+
+app.get('/api/chat/messages', async (req, res) => {
+  const { visitorId, since } = req.query || {};
+  if (!visitorId || typeof visitorId !== 'string' || visitorId.length > 100) {
+    return res.status(400).json({ ok: false, error: 'Некорректный visitorId.' });
+  }
+  try {
+    const messages = await getChatMessagesSince(visitorId, Number(since) || 0);
+    res.json({ ok: true, messages });
+  } catch (err) {
+    console.error('Чат: не удалось получить сообщения:', err.message);
+    res.status(500).json({ ok: false, error: 'Не удалось загрузить сообщения.' });
+  }
+});
+
 app.post('/api/leads', async (req, res) => {
   const { name, phone, project, callTime, yclid } = req.body || {};
 
@@ -166,12 +292,16 @@ app.post('/api/leads', async (req, res) => {
   notifyTelegramGroup({ id: leadId, name, phone, project, callTime });
 });
 
+const CHAT_POLL_INTERVAL_MS = 4000;
+
 ensureSchema()
   .then(() => {
     backgroundRetryLoop();
     setInterval(backgroundRetryLoop, RETRY_INTERVAL_MS);
     uploadOfflineConversionsLoop();
     setInterval(uploadOfflineConversionsLoop, METRIKA_UPLOAD_INTERVAL_MS);
+    chatPollLoop();
+    setInterval(chatPollLoop, CHAT_POLL_INTERVAL_MS);
   })
   .catch((err) => console.error('Не удалось подготовить схему БД:', err.message));
 

@@ -378,3 +378,158 @@ document.querySelectorAll('a[href^="tel:"]').forEach((link) => {
 
   calcMortgage();
 })();
+
+(function () {
+  const toggleBtn = document.getElementById('chatToggle');
+  const panel = document.getElementById('chatPanel');
+  const closeBtn = document.getElementById('chatClose');
+  const messagesEl = document.getElementById('chatMessages');
+  const form = document.getElementById('chatForm');
+  const input = document.getElementById('chatInput');
+  const badge = document.getElementById('chatUnreadBadge');
+  if (!toggleBtn || !panel || !closeBtn || !messagesEl || !form || !input || !badge) return;
+
+  const VISITOR_KEY = 'apd59-chat-visitor-id';
+  const LAST_READ_KEY = 'apd59-chat-last-read-id';
+
+  function readStorage(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+  function writeStorage(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) {}
+  }
+
+  let visitorId = readStorage(VISITOR_KEY);
+  if (!visitorId) {
+    visitorId = window.crypto && crypto.randomUUID
+      ? crypto.randomUUID()
+      : Date.now().toString(36) + Math.random().toString(36).slice(2);
+    writeStorage(VISITOR_KEY, visitorId);
+  }
+
+  let lastId = 0;
+  let lastReadId = Number(readStorage(LAST_READ_KEY)) || 0;
+  let isOpen = false;
+  let historyRendered = false;
+
+  function renderMessage(msg) {
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-msg ' + (msg.direction === 'visitor' ? 'chat-msg-visitor' : 'chat-msg-manager');
+    const p = document.createElement('p');
+    p.textContent = msg.text;
+    bubble.appendChild(p);
+    messagesEl.appendChild(bubble);
+  }
+
+  function renderGreeting() {
+    renderMessage({ direction: 'manager', text: 'Здравствуйте! Чем можем помочь? Задайте вопрос — ответим прямо здесь.' });
+  }
+
+  function scrollToBottom() {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function updateBadge() {
+    const unread = Math.max(0, lastId - lastReadId);
+    if (unread > 0 && !isOpen) {
+      badge.textContent = unread > 9 ? '9+' : String(unread);
+      badge.hidden = false;
+    } else {
+      badge.hidden = true;
+    }
+  }
+
+  async function fetchMessages(since) {
+    const res = await fetch('/api/chat/messages?visitorId=' + encodeURIComponent(visitorId) + '&since=' + since);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || 'chat fetch failed');
+    return json.messages;
+  }
+
+  async function poll() {
+    try {
+      const messages = await fetchMessages(lastId);
+      if (!messages.length) return;
+      messages.forEach((msg) => {
+        lastId = Math.max(lastId, msg.id);
+        if (isOpen && historyRendered) renderMessage(msg);
+      });
+      if (isOpen) {
+        scrollToBottom();
+        lastReadId = lastId;
+        writeStorage(LAST_READ_KEY, String(lastReadId));
+      }
+      updateBadge();
+    } catch (e) {
+      // тихо игнорируем — следующий опрос попробует снова
+    }
+  }
+
+  async function openPanel() {
+    isOpen = true;
+    panel.hidden = false;
+    input.focus();
+
+    if (!historyRendered) {
+      historyRendered = true;
+      try {
+        const messages = await fetchMessages(0);
+        if (messages.length) {
+          messages.forEach((msg) => {
+            renderMessage(msg);
+            lastId = Math.max(lastId, msg.id);
+          });
+        } else {
+          renderGreeting();
+        }
+      } catch (e) {
+        renderGreeting();
+      }
+      scrollToBottom();
+    }
+
+    lastReadId = lastId;
+    writeStorage(LAST_READ_KEY, String(lastReadId));
+    updateBadge();
+  }
+
+  function closePanel() {
+    isOpen = false;
+    panel.hidden = true;
+  }
+
+  toggleBtn.addEventListener('click', () => {
+    if (panel.hidden) openPanel();
+    else closePanel();
+  });
+  closeBtn.addEventListener('click', closePanel);
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    historyRendered = true;
+    renderMessage({ direction: 'visitor', text });
+    scrollToBottom();
+
+    try {
+      const res = await fetch('/api/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visitorId, text }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        lastId = Math.max(lastId, json.id);
+        lastReadId = lastId;
+        writeStorage(LAST_READ_KEY, String(lastReadId));
+      }
+    } catch (e) {
+      // сообщение уже показано локально — подтянется на следующем poll, если что-то пошло не так
+    }
+  });
+
+  poll();
+  setInterval(poll, 5000);
+})();

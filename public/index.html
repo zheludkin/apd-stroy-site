@@ -689,16 +689,38 @@
   <button type="button" class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Следующее фото">›</button>
 </div>
 
-<a href="https://t.me/apd59_bot" target="_blank" rel="noopener" class="online-widget" aria-label="Написать нам в Telegram — мы на связи">
+<button type="button" class="online-widget" id="chatToggle" aria-label="Открыть чат с менеджером">
   <span class="online-widget-avatar">
     <img src="images/logo-icon.png" alt="" width="44" height="44">
     <span class="online-widget-dot" aria-hidden="true"></span>
+    <span class="chat-unread-badge" id="chatUnreadBadge" hidden></span>
   </span>
   <span class="online-widget-text">
-    <span class="online-widget-status">Мы на связи</span>
-    <span class="online-widget-name">Ответим в Telegram</span>
+    <span class="online-widget-status">Менеджер онлайн</span>
+    <span class="online-widget-name">Задать вопрос</span>
   </span>
-</a>
+</button>
+
+<div class="chat-panel" id="chatPanel" hidden>
+  <div class="chat-panel-header">
+    <span class="chat-panel-header-avatar">
+      <img src="images/logo-icon.png" alt="" width="34" height="34">
+      <span class="online-widget-dot" aria-hidden="true"></span>
+    </span>
+    <span class="chat-panel-header-text">
+      <strong>АПД Строй</strong>
+      <span>Менеджер онлайн</span>
+    </span>
+    <button type="button" class="chat-panel-close" id="chatClose" aria-label="Закрыть чат">✕</button>
+  </div>
+  <div class="chat-panel-messages" id="chatMessages"></div>
+  <form class="chat-panel-form" id="chatForm">
+    <input type="text" id="chatInput" placeholder="Напишите сообщение…" autocomplete="off" maxlength="2000">
+    <button type="submit" class="chat-panel-send" aria-label="Отправить">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 20l18-8L3 4v6l12 2-12 2z"/></svg>
+    </button>
+  </form>
+</div>
 
 <div class="cookie-banner" id="cookieBanner" hidden>
   <p>В соответствии со ст. 9 Федерального закона от 27.07.2006 № 152-ФЗ «О персональных данных» мы используем cookie для аналитики посещаемости сайта (Яндекс.Метрика) только с вашего согласия. <a href="/politika.html">Подробнее в политике обработки персональных данных</a>.</p>
