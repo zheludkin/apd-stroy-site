@@ -245,7 +245,7 @@ a {
 /* Hero */
 .hero {
   position: relative;
-  padding: 88px 0 72px;
+  padding: 48px 0 40px;
   background: #1f2a20 url('../images/hero-main.jpg') center 65% / cover no-repeat;
   isolation: isolate;
 }
