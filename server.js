@@ -412,27 +412,3 @@ ensureSchema()
 app.listen(PORT, () => {
   console.log(`АПД Строй сайт запущен: http://localhost:${PORT}`);
 });
-
-// ВРЕМЕННО (16.09.2026): диагностика — проверяем, что MAX Bot API (platform-api2.max.ru)
-// доступен с Timeweb и российский корневой сертификат (NODE_EXTRA_CA_CERTS) подхватился.
-// Убрать после проверки.
-(async () => {
-  try {
-    const token = process.env.MAX_BOT_TOKEN;
-    if (!token) {
-      console.log('MAX API test: MAX_BOT_TOKEN не задан, пропуск');
-      return;
-    }
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch('https://platform-api2.max.ru/me', {
-      headers: { Authorization: token },
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-    const body = await res.text();
-    console.log(`MAX API test: status ${res.status}, body: ${body.slice(0, 300)}`);
-  } catch (err) {
-    console.error('MAX API test: FAILED —', err.message, err.cause ? err.cause.message : '');
-  }
-})();
