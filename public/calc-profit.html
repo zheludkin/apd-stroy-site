@@ -106,7 +106,6 @@
     background: var(--bg);
   }
   td input.qty { width: 56px; text-align: center; }
-  td input.empty-cost { border-color: var(--red); background: #fdf1ef; }
   .profit-cell { font-weight: 700; }
   .profit-pos { color: var(--accent-dark); }
   .profit-neg { color: var(--red); }
@@ -166,8 +165,8 @@
     (дом + участок + скважина + канализация вместе, одним числом). Себестоимость дома, участка
     и скважины+канализации указываются отдельно ниже — это то, что реально стоит компании.
     Прибыль = цена продажи − (себестоимость дома + участок + скважина/канализация) − налог.<br>
-    <strong>Значения по умолчанию</strong> (любое можно поменять прямо в таблице/полях — расчёт
-    пересчитывается сразу): себестоимость «Практик 75/75м» — 2 800 000 ₽, «Практик 90/90м» —
+    <strong>Значения по умолчанию</strong> (любое можно поменять прямо в полях — расчёт
+    пересчитывается сразу): себестоимость «Практик 75» — 2 800 000 ₽, «Практик 90» —
     3 200 000 ₽, участок — 500 000 ₽ на дом, скважина + канализация — 250 000 ₽ на дом, налог УСН 6% от выручки.
   </div>
 
@@ -175,12 +174,20 @@
     <h2>Общие параметры</h2>
     <div class="globals-grid">
       <div class="field">
+        <label for="costP75">Себестоимость «Практик 75», ₽</label>
+        <input type="number" id="costP75" value="2800000" step="10000">
+      </div>
+      <div class="field">
+        <label for="costP90">Себестоимость «Практик 90», ₽</label>
+        <input type="number" id="costP90" value="3200000" step="10000">
+      </div>
+      <div class="field">
         <label for="landCost">Участок на дом, ₽</label>
         <input type="number" id="landCost" value="500000" step="10000">
       </div>
       <div class="field">
         <label for="utilCost">Скважина + канализация на дом, ₽</label>
-        <input type="number" id="utilCost" value="300000" step="10000">
+        <input type="number" id="utilCost" value="250000" step="10000">
       </div>
       <div class="field">
         <label for="taxRate">Налог (УСН, % от выручки)</label>
@@ -254,9 +261,7 @@
 
   var DEFAULT_PROJECTS = [
     { id: 'p75', name: '«Практик 75»', qty: 0, cost: 2800000, price: 3540000 },
-    { id: 'p75m', name: '«Практик 75м»', qty: 0, cost: 2800000, price: 3540000 },
     { id: 'p90', name: '«Практик 90»', qty: 0, cost: 3200000, price: 3950000 },
-    { id: 'p90m', name: '«Практик 90м»', qty: 0, cost: 3200000, price: 3950000 },
   ];
 
   var DEFAULT_STATE = {
@@ -306,10 +311,18 @@
   var landCostInput = document.getElementById('landCost');
   var utilCostInput = document.getElementById('utilCost');
   var taxRateInput = document.getElementById('taxRate');
+  var costP75Input = document.getElementById('costP75');
+  var costP90Input = document.getElementById('costP90');
 
   landCostInput.value = state.landCost;
   utilCostInput.value = state.utilCost;
   taxRateInput.value = state.taxRate;
+  costP75Input.value = getProject('p75').cost;
+  costP90Input.value = getProject('p90').cost;
+
+  function getProject(id) {
+    return state.projects.find(function (p) { return p.id === id; });
+  }
 
   function buildRows() {
     tbody.innerHTML = '';
@@ -318,7 +331,7 @@
       tr.innerHTML =
         '<td>' + proj.name + '</td>' +
         '<td><input class="qty" type="number" min="0" step="1" data-field="qty" data-idx="' + idx + '" value="' + proj.qty + '"></td>' +
-        '<td><input type="number" min="0" step="10000" data-field="cost" data-idx="' + idx + '" value="' + (proj.cost === null ? '' : proj.cost) + '" placeholder="напр. 2500000"></td>' +
+        '<td class="cost-display muted">' + fmtMoney(proj.cost) + '</td>' +
         '<td><input type="number" min="0" step="10000" data-field="price" data-idx="' + idx + '" value="' + proj.price + '"></td>' +
         '<td class="revenue-cell">—</td>' +
         '<td class="cost-cell">—</td>' +
@@ -336,7 +349,7 @@
     var idx = Number(e.target.dataset.idx);
     var field = e.target.dataset.field;
     var raw = e.target.value;
-    var val = raw === '' ? (field === 'cost' ? null : 0) : Number(raw);
+    var val = raw === '' ? 0 : Number(raw);
     state.projects[idx][field] = val;
     saveState();
     recalc();
@@ -357,6 +370,18 @@
     saveState();
     recalc();
   });
+  costP75Input.addEventListener('input', function () {
+    getProject('p75').cost = Number(costP75Input.value) || 0;
+    saveState();
+    buildRows();
+    recalc();
+  });
+  costP90Input.addEventListener('input', function () {
+    getProject('p90').cost = Number(costP90Input.value) || 0;
+    saveState();
+    buildRows();
+    recalc();
+  });
 
   document.getElementById('resetBtn').addEventListener('click', function () {
     if (!confirm('Сбросить все значения к настройкам по умолчанию? Сохранённый расчёт будет удалён.')) return;
@@ -365,6 +390,8 @@
     landCostInput.value = state.landCost;
     utilCostInput.value = state.utilCost;
     taxRateInput.value = state.taxRate;
+    costP75Input.value = getProject('p75').cost;
+    costP90Input.value = getProject('p90').cost;
     buildRows();
     recalc();
   });
@@ -392,13 +419,6 @@
       profitCell.textContent = fmtMoney(profit);
       profitCell.className = 'profit-cell ' + (profit >= 0 ? 'profit-pos' : 'profit-neg');
       row.querySelector('.margin-cell').textContent = margin.toFixed(1) + '%';
-
-      var costInput = row.querySelector('input[data-field="cost"]');
-      if (proj.cost === null || proj.cost === 0) {
-        costInput.classList.add('empty-cost');
-      } else {
-        costInput.classList.remove('empty-cost');
-      }
 
       totQty += qty;
       totRevenue += revenue;
