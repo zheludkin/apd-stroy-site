@@ -166,10 +166,10 @@ const projectSelect = document.getElementById('project');
   const totalSteps = steps.length;
 
   const PROJECTS = {
-    '75': { title: '«Практик 75»', img: 'images/practik-75-exterior.png', area: '75 м²', price: '3 540 000 ₽', formValue: 'Практик 75' },
-    '75m': { title: '«Практик 75м»', img: 'images/practik-75m-plan.png', area: '75 м²', price: '3 540 000 ₽', formValue: 'Практик 75м' },
-    '90': { title: '«Практик 90»', img: 'images/practik-90-exterior.png', area: '90 м²', price: '3 950 000 ₽', formValue: 'Практик 90' },
-    '90m': { title: '«Практик 90м»', img: 'images/practik-90m-plan.png', area: '90 м²', price: '3 950 000 ₽', formValue: 'Практик 90м' },
+    '75': { title: '«Практик 75»', img: 'images/practik-75-exterior.png', area: '75 м²', price: '3 340 000 ₽', formValue: 'Практик 75' },
+    '75m': { title: '«Практик 75м»', img: 'images/practik-75m-plan.png', area: '75 м²', price: '3 340 000 ₽', formValue: 'Практик 75м' },
+    '90': { title: '«Практик 90»', img: 'images/practik-90-exterior.png', area: '90 м²', price: '3 750 000 ₽', formValue: 'Практик 90' },
+    '90m': { title: '«Практик 90м»', img: 'images/practik-90m-plan.png', area: '90 м²', price: '3 750 000 ₽', formValue: 'Практик 90м' },
   };
 
   let answers = {};
