@@ -2,6 +2,7 @@ require('dotenv').config();
 const path = require('path');
 const express = require('express');
 const { ProxyAgent } = require('undici');
+const nodemailer = require('nodemailer');
 const {
   appendLead,
   getPool,
@@ -146,24 +147,110 @@ async function notifyTelegramGroup(lead, { attempts = 3 } = {}) {
   return false;
 }
 
+// Дублирование заявок на почту. Timeweb (ru-3) блокирует стандартные SMTP-порты
+// (25/465/587) на уровне платформы (см. память apd-stroy-lead-instant-notify) —
+// то есть прямой SMTP с Gmail (465/587 — других портов Gmail не даёт) отсюда
+// не пройдёт вообще, пока не задан TELEGRAM_PROXY_URL как socks5://... — тот же
+// прокси, что и для Telegram, nodemailer умеет ходить через него нативно
+// (требует пакет `socks`, добавлен в зависимости).
+const EMAIL_RECIPIENTS = ['mz.59@yandex.ru', 'iga.59@yandex.ru'];
+let emailTransporter = null;
+
+function getEmailTransporter() {
+  if (!emailTransporter) {
+    const host = process.env.SMTP_HOST;
+    const port = Number(process.env.EMAIL_SMTP_PORT || 465);
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+    if (!host || !user || !pass) {
+      throw new Error('SMTP_HOST/SMTP_USER/SMTP_PASS не заданы');
+    }
+    const proxyUrl = process.env.TELEGRAM_PROXY_URL;
+    emailTransporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      requireTLS: port !== 465,
+      auth: { user, pass },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
+      ...(proxyUrl && proxyUrl.startsWith('socks') ? { proxy: proxyUrl } : {}),
+    });
+    if (proxyUrl && proxyUrl.startsWith('socks')) {
+      emailTransporter.set('proxy_socks_module', require('socks'));
+    }
+  }
+  return emailTransporter;
+}
+
+async function sendLeadEmail({ name, phone, project, callTime }) {
+  const transporter = getEmailTransporter();
+  await transporter.sendMail({
+    from: process.env.SMTP_USER,
+    to: EMAIL_RECIPIENTS.join(', '),
+    subject: `Новая заявка с сайта — ${name}`,
+    text:
+      `Новая заявка с сайта апд59.рф\n\n` +
+      `Имя: ${name}\n` +
+      `Телефон: ${phone}\n` +
+      `Проект: ${project || '—'}\n` +
+      `Удобное время звонка: ${callTime || '—'}`,
+  });
+}
+
+async function notifyEmail(lead, { attempts = 3 } = {}) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      await sendLeadEmail(lead);
+      if (lead.id) {
+        await getPool().query('UPDATE leads SET emailed_at = now() WHERE id = $1', [lead.id]);
+      }
+      return true;
+    } catch (err) {
+      lastError = err;
+      console.error(`Попытка ${attempt}/${attempts} отправки email не удалась:`, err.message);
+      if (attempt < attempts) {
+        await new Promise((r) => setTimeout(r, attempt * 2000));
+      }
+    }
+  }
+  console.error('Быстрый путь email исчерпан, заявка уйдёт в фоновый цикл повторов:', lastError?.message);
+  return false;
+}
+
 async function backgroundRetryLoop() {
   try {
     const { rows } = await getPool().query(
-      `SELECT id, name, phone, project, call_time AS "callTime"
+      `SELECT id, name, phone, project, call_time AS "callTime", notified_at, emailed_at
        FROM leads
-       WHERE source = 'Сайт' AND notified_at IS NULL AND notify_attempts < $1
+       WHERE source = 'Сайт'
+         AND ((notified_at IS NULL AND notify_attempts < $1) OR (emailed_at IS NULL AND email_attempts < $1))
        ORDER BY id ASC`,
       [RETRY_LIMIT]
     );
 
     for (const lead of rows) {
-      await getPool().query('UPDATE leads SET notify_attempts = notify_attempts + 1 WHERE id = $1', [lead.id]);
-      try {
-        await sendTelegramMessage(lead);
-        await getPool().query('UPDATE leads SET notified_at = now() WHERE id = $1', [lead.id]);
-        console.log(`Фоновый повтор: заявка #${lead.id} отправлена в Telegram.`);
-      } catch (err) {
-        console.error(`Фоновый повтор: заявка #${lead.id} — попытка не удалась —`, err.message);
+      if (!lead.notified_at) {
+        await getPool().query('UPDATE leads SET notify_attempts = notify_attempts + 1 WHERE id = $1', [lead.id]);
+        try {
+          await sendTelegramMessage(lead);
+          await getPool().query('UPDATE leads SET notified_at = now() WHERE id = $1', [lead.id]);
+          console.log(`Фоновый повтор: заявка #${lead.id} отправлена в Telegram.`);
+        } catch (err) {
+          console.error(`Фоновый повтор: заявка #${lead.id} — Telegram попытка не удалась —`, err.message);
+        }
+      }
+      if (!lead.emailed_at) {
+        await getPool().query('UPDATE leads SET email_attempts = email_attempts + 1 WHERE id = $1', [lead.id]);
+        try {
+          await sendLeadEmail(lead);
+          await getPool().query('UPDATE leads SET emailed_at = now() WHERE id = $1', [lead.id]);
+          console.log(`Фоновый повтор: заявка #${lead.id} отправлена на email.`);
+        } catch (err) {
+          console.error(`Фоновый повтор: заявка #${lead.id} — email попытка не удалась —`, err.message);
+        }
       }
     }
   } catch (err) {
@@ -302,6 +389,7 @@ app.post('/api/leads', async (req, res) => {
   }
 
   notifyTelegramGroup({ id: leadId, name, phone, project, callTime });
+  notifyEmail({ id: leadId, name, phone, project, callTime });
 });
 
 // chatPollLoop() (getUpdates) НЕ запускается отсюда — Timeweb (ru-3) ненадёжно
