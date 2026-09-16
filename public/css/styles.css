@@ -224,7 +224,7 @@ a {
 .hero {
   position: relative;
   padding: 88px 0 72px;
-  background: #1f2a20 url('../images/gallery/real-04.jpg') center 65% / cover no-repeat;
+  background: #1f2a20 url('../images/hero-main.jpg') center 65% / cover no-repeat;
   isolation: isolate;
 }
 
@@ -360,28 +360,39 @@ a {
   outline-offset: -3px;
 }
 
-/* Stats — соц. доказательство цифрами */
+/* Stats — верхняя полоса доверия (годы работы, кол-во домов, банки-партнёры) */
 .stats {
-  padding: 40px 0;
+  padding: 16px 0;
   background: var(--bg-alt);
   border-bottom: 1px solid var(--wood-light);
 }
 
+.stats-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px 36px;
+}
+
 .stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px 32px;
   text-align: center;
 }
 
 .stat-tile {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .stat-tile strong {
-  font-size: clamp(1.3rem, 3vw, 1.7rem);
+  font-size: 1rem;
   color: var(--accent-dark);
   font-weight: 800;
 }
@@ -391,13 +402,55 @@ a {
   color: var(--text-soft);
 }
 
-@media (max-width: 640px) {
-  .stats-grid {
-    grid-template-columns: 1fr 1fr;
+.stats-banks {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-left: 36px;
+  border-left: 1px solid var(--wood-light);
+}
+
+.stats-banks-label {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+
+.stats-banks-logos {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.stats-banks-logos img {
+  opacity: 0.85;
+}
+
+@media (max-width: 720px) {
+  .stats-inner {
+    flex-direction: column;
+    gap: 12px;
   }
 
-  .stat-tile:last-child {
-    grid-column: 1 / -1;
+  .stat-tile {
+    white-space: normal;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .stats-banks {
+    flex-direction: column;
+    padding-left: 0;
+    border-left: none;
+    padding-top: 12px;
+    border-top: 1px solid var(--wood-light);
+    width: 100%;
+    gap: 10px;
+  }
+
+  .stats-banks-logos {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }
 
