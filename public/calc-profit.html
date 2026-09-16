@@ -28,7 +28,7 @@
     line-height: 1.5;
     padding: 20px 14px 60px;
   }
-  .wrap { max-width: 1120px; margin: 0 auto; }
+  .wrap { max-width: 1160px; margin: 0 auto; }
   h1 { font-size: 1.4rem; margin: 0 0 4px; color: var(--wood-dark); }
   .subtitle { color: var(--text-soft); font-size: 0.9rem; margin: 0 0 20px; }
   .badge {
@@ -159,7 +159,7 @@
 <div class="wrap">
   <span class="badge">Внутренний инструмент — не для клиентов</span>
   <h1>Калькулятор прибыли по проектам</h1>
-  <p class="subtitle">Себестоимость + цена продажи по типовым проектам, участок, проценты по кредиту на стройку и налог УСН 6% — считаем прибыль по партии домов.</p>
+  <p class="subtitle">Себестоимость + цена продажи по типовым проектам, участок, доп. расходы, проценты по кредиту на стройку и налог УСН 6% — считаем прибыль по партии домов.</p>
 
   <div class="assumptions">
     <strong>Как считается:</strong> «Цена продажи» — это полная сумма, которую платит клиент
@@ -167,15 +167,18 @@
     (в общих параметрах) — то, что реально стоит компании построить дом, в неё уже включена
     скважина + канализация (≈250 000 ₽) — отдельно эта сумма не вычитается. Участок — отдельная
     закупка, указывается отдельным полем.<br>
+    <strong>Доп. расходы:</strong> на непредвиденное — есть общая сумма на дом (в общих параметрах,
+    применяется ко всем проектам) и отдельное поле в каждой строке таблицы (специфика конкретного
+    проекта) — складываются вместе.<br>
     <strong>Кредит на стройку:</strong> себестоимость дома считаем как деньги, взятые в кредит под
     26% годовых на время стройки и продажи. Чем дольше дом висит непроданным (графа «Срок продажи,
     мес.» по каждому проекту), тем больше процентов набегает и тем меньше итоговая прибыль.
     Проценты = себестоимость дома × (ставка / 12) × количество месяцев.<br>
-    Прибыль = цена продажи − (себестоимость дома + участок + проценты по кредиту) − налог.<br>
+    Прибыль = цена продажи − (себестоимость дома + участок + доп. расходы + проценты по кредиту) − налог.<br>
     <strong>Значения по умолчанию</strong> (любое можно поменять прямо в полях — расчёт
     пересчитывается сразу): себестоимость «Практик 75» — 2 800 000 ₽, «Практик 90» — 3 200 000 ₽
-    (обе суммы уже с учётом скважины и канализации), участок — 500 000 ₽ на дом, ставка кредита —
-    26% годовых, срок продажи — 2 мес., налог УСН 6% от выручки.
+    (обе суммы уже с учётом скважины и канализации), участок — 500 000 ₽ на дом, доп. расходы — 0 ₽,
+    ставка кредита — 26% годовых, срок продажи — 2 мес., налог УСН 6% от выручки.
   </div>
 
   <div class="card">
@@ -192,6 +195,10 @@
       <div class="field">
         <label for="landCost">Участок на дом, ₽</label>
         <input type="number" id="landCost" value="500000" step="10000">
+      </div>
+      <div class="field">
+        <label for="extraCost">Доп. расходы на дом, ₽ (общие, на все проекты)</label>
+        <input type="number" id="extraCost" value="0" step="10000">
       </div>
       <div class="field">
         <label for="creditRate">Ставка кредита на стройку, % годовых</label>
@@ -214,10 +221,10 @@
             <th>Кол-во</th>
             <th>Цена продажи, ₽</th>
             <th>Срок продажи, мес.</th>
-            <th>Выручка</th>
-            <th>Расходы</th>
-            <th>Проценты по кредиту</th>
+            <th>Доп. расходы, ₽</th>
             <th>Налог</th>
+            <th>Проценты по кредиту</th>
+            <th>Расходы</th>
             <th>Прибыль</th>
             <th>Маржа</th>
           </tr>
@@ -229,10 +236,10 @@
             <td id="totQty">0</td>
             <td class="muted">—</td>
             <td class="muted">—</td>
-            <td id="totRevenue">0 ₽</td>
-            <td id="totCost">0 ₽</td>
-            <td id="totInterest">0 ₽</td>
+            <td class="muted">—</td>
             <td id="totTax">0 ₽</td>
+            <td id="totInterest">0 ₽</td>
+            <td id="totCost">0 ₽</td>
             <td id="totProfit" class="profit-cell">0 ₽</td>
             <td id="totMargin">0%</td>
           </tr>
@@ -267,15 +274,16 @@
 
 <script>
 (function () {
-  var STORAGE_KEY = 'apd59-profit-calc-v2';
+  var STORAGE_KEY = 'apd59-profit-calc-v3';
 
   var DEFAULT_PROJECTS = [
-    { id: 'p75', name: '«Практик 75»', qty: 0, cost: 2800000, price: 4000000, months: 2 },
-    { id: 'p90', name: '«Практик 90»', qty: 0, cost: 3200000, price: 4400000, months: 2 },
+    { id: 'p75', name: '«Практик 75»', qty: 0, cost: 2800000, price: 4000000, months: 2, extra: 0 },
+    { id: 'p90', name: '«Практик 90»', qty: 0, cost: 3200000, price: 4400000, months: 2, extra: 0 },
   ];
 
   var DEFAULT_STATE = {
     landCost: 500000,
+    extraCost: 0,
     creditRate: 26,
     taxRate: 6,
     projects: DEFAULT_PROJECTS,
@@ -294,6 +302,7 @@
       });
       return {
         landCost: numOr(parsed.landCost, DEFAULT_STATE.landCost),
+        extraCost: numOr(parsed.extraCost, DEFAULT_STATE.extraCost),
         creditRate: numOr(parsed.creditRate, DEFAULT_STATE.creditRate),
         taxRate: numOr(parsed.taxRate, DEFAULT_STATE.taxRate),
         projects: merged,
@@ -319,12 +328,14 @@
 
   var tbody = document.getElementById('projectsBody');
   var landCostInput = document.getElementById('landCost');
+  var extraCostInput = document.getElementById('extraCost');
   var creditRateInput = document.getElementById('creditRate');
   var taxRateInput = document.getElementById('taxRate');
   var costP75Input = document.getElementById('costP75');
   var costP90Input = document.getElementById('costP90');
 
   landCostInput.value = state.landCost;
+  extraCostInput.value = state.extraCost;
   creditRateInput.value = state.creditRate;
   taxRateInput.value = state.taxRate;
   costP75Input.value = getProject('p75').cost;
@@ -343,10 +354,10 @@
         '<td><input class="qty" type="number" min="0" step="1" data-field="qty" data-idx="' + idx + '" value="' + proj.qty + '"></td>' +
         '<td><input type="number" min="0" step="10000" data-field="price" data-idx="' + idx + '" value="' + proj.price + '"></td>' +
         '<td><input class="months" type="number" min="0" step="1" data-field="months" data-idx="' + idx + '" value="' + proj.months + '"></td>' +
-        '<td class="revenue-cell">—</td>' +
-        '<td class="cost-cell">—</td>' +
-        '<td class="interest-cell">—</td>' +
+        '<td><input type="number" min="0" step="10000" data-field="extra" data-idx="' + idx + '" value="' + proj.extra + '"></td>' +
         '<td class="tax-cell">—</td>' +
+        '<td class="interest-cell">—</td>' +
+        '<td class="cost-cell">—</td>' +
         '<td class="profit-cell">—</td>' +
         '<td class="margin-cell">—</td>';
       tbody.appendChild(tr);
@@ -368,6 +379,11 @@
 
   landCostInput.addEventListener('input', function () {
     state.landCost = Number(landCostInput.value) || 0;
+    saveState();
+    recalc();
+  });
+  extraCostInput.addEventListener('input', function () {
+    state.extraCost = Number(extraCostInput.value) || 0;
     saveState();
     recalc();
   });
@@ -397,6 +413,7 @@
     state = clone(DEFAULT_STATE);
     try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
     landCostInput.value = state.landCost;
+    extraCostInput.value = state.extraCost;
     creditRateInput.value = state.creditRate;
     taxRateInput.value = state.taxRate;
     costP75Input.value = getProject('p75').cost;
@@ -414,9 +431,10 @@
       var cost = proj.cost || 0;
       var price = proj.price || 0;
       var months = proj.months || 0;
+      var extra = proj.extra || 0;
 
       var revenue = qty * price;
-      var variableCosts = qty * (cost + state.landCost);
+      var variableCosts = qty * (cost + state.landCost + state.extraCost + extra);
       var interestPerHouse = cost * (state.creditRate / 100 / 12) * months;
       var interest = qty * interestPerHouse;
       var tax = revenue * (state.taxRate / 100);
@@ -424,10 +442,9 @@
       var margin = revenue > 0 ? (profit / revenue) * 100 : 0;
 
       var row = rows[idx];
-      row.querySelector('.revenue-cell').textContent = fmtMoney(revenue);
-      row.querySelector('.cost-cell').textContent = fmtMoney(variableCosts);
-      row.querySelector('.interest-cell').textContent = fmtMoney(interest);
       row.querySelector('.tax-cell').textContent = fmtMoney(tax);
+      row.querySelector('.interest-cell').textContent = fmtMoney(interest);
+      row.querySelector('.cost-cell').textContent = fmtMoney(variableCosts);
       var profitCell = row.querySelector('.profit-cell');
       profitCell.textContent = fmtMoney(profit);
       profitCell.className = 'profit-cell ' + (profit >= 0 ? 'profit-pos' : 'profit-neg');
@@ -444,10 +461,9 @@
     var totMargin = totRevenue > 0 ? (totProfit / totRevenue) * 100 : 0;
 
     document.getElementById('totQty').textContent = totQty;
-    document.getElementById('totRevenue').textContent = fmtMoney(totRevenue);
-    document.getElementById('totCost').textContent = fmtMoney(totCost);
-    document.getElementById('totInterest').textContent = fmtMoney(totInterest);
     document.getElementById('totTax').textContent = fmtMoney(totTax);
+    document.getElementById('totInterest').textContent = fmtMoney(totInterest);
+    document.getElementById('totCost').textContent = fmtMoney(totCost);
     var totProfitCell = document.getElementById('totProfit');
     totProfitCell.textContent = fmtMoney(totProfit);
     totProfitCell.className = 'profit-cell ' + (totProfit >= 0 ? 'profit-pos' : 'profit-neg');
