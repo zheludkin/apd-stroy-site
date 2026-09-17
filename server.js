@@ -518,7 +518,11 @@ async function fetchDirectCampaignReport(dateStr) {
 }
 
 function formatDirectReport(dateStr, tsv) {
-  const lines = tsv.trim().split('\n').filter(Boolean);
+  const lines = tsv
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .filter((line) => !line.startsWith('CampaignName\t'));
   if (!lines.length) {
     return `📊 Яндекс Директ за ${dateStr}: показов не было.`;
   }
