@@ -2,7 +2,6 @@ require('dotenv').config();
 const path = require('path');
 const express = require('express');
 const { ProxyAgent } = require('undici');
-const nodemailer = require('nodemailer');
 const {
   appendLead,
   getPool,
@@ -151,79 +150,6 @@ async function notifyTelegramGroup(lead, { attempts = 3 } = {}) {
   return false;
 }
 
-// Дублирование заявок на почту. Timeweb (ru-3) блокирует стандартные SMTP-порты
-// (25/465/587) на уровне платформы (см. память apd-stroy-lead-instant-notify) —
-// то есть прямой SMTP с Gmail (465/587 — других портов Gmail не даёт) отсюда
-// не пройдёт вообще, пока не задан TELEGRAM_PROXY_URL как socks5://... — тот же
-// прокси, что и для Telegram, nodemailer умеет ходить через него нативно
-// (требует пакет `socks`, добавлен в зависимости).
-const EMAIL_RECIPIENTS = ['mz.59@yandex.ru', 'iga.59@yandex.ru'];
-let emailTransporter = null;
-
-function getEmailTransporter() {
-  if (!emailTransporter) {
-    const host = process.env.SMTP_HOST;
-    const port = Number(process.env.EMAIL_SMTP_PORT || 465);
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
-    if (!host || !user || !pass) {
-      throw new Error('SMTP_HOST/SMTP_USER/SMTP_PASS не заданы');
-    }
-    const proxyUrl = process.env.TELEGRAM_PROXY_URL;
-    emailTransporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      requireTLS: port !== 465,
-      auth: { user, pass },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
-      ...(proxyUrl && proxyUrl.startsWith('socks') ? { proxy: proxyUrl } : {}),
-    });
-    if (proxyUrl && proxyUrl.startsWith('socks')) {
-      emailTransporter.set('proxy_socks_module', require('socks'));
-    }
-  }
-  return emailTransporter;
-}
-
-async function sendLeadEmail({ name, phone, project, callTime }) {
-  const transporter = getEmailTransporter();
-  await transporter.sendMail({
-    from: process.env.SMTP_USER,
-    to: EMAIL_RECIPIENTS.join(', '),
-    subject: `Новая заявка с сайта — ${name}`,
-    text:
-      `Новая заявка с сайта апд59.рф\n\n` +
-      `Имя: ${name}\n` +
-      `Телефон: ${phone}\n` +
-      `Проект: ${project || '—'}\n` +
-      `Удобное время звонка: ${callTime || '—'}`,
-  });
-}
-
-async function notifyEmail(lead, { attempts = 3 } = {}) {
-  let lastError;
-  for (let attempt = 1; attempt <= attempts; attempt++) {
-    try {
-      await sendLeadEmail(lead);
-      if (lead.id) {
-        await getPool().query('UPDATE leads SET emailed_at = now() WHERE id = $1', [lead.id]);
-      }
-      return true;
-    } catch (err) {
-      lastError = err;
-      console.error(`Попытка ${attempt}/${attempts} отправки email не удалась:`, err.message);
-      if (attempt < attempts) {
-        await new Promise((r) => setTimeout(r, attempt * 2000));
-      }
-    }
-  }
-  console.error('Быстрый путь email исчерпан, заявка уйдёт в фоновый цикл повторов:', lastError?.message);
-  return false;
-}
-
 // Дублирование заявок в MAX (российский мессенджер) — в отличие от api.telegram.org,
 // platform-api2.max.ru доступен с Timeweb напрямую (см. память apd-stroy-site-live-chat-relay).
 // Требует NODE_EXTRA_CA_CERTS (см. certs/russian_trusted_ca_bundle.crt) — MAX использует
@@ -286,12 +212,11 @@ async function notifyMaxChat(lead, { attempts = 3 } = {}) {
 async function backgroundRetryLoop() {
   try {
     const { rows } = await getPool().query(
-      `SELECT id, name, phone, project, call_time AS "callTime", notified_at, emailed_at, max_notified_at
+      `SELECT id, name, phone, project, call_time AS "callTime", notified_at, max_notified_at
        FROM leads
        WHERE source = 'Сайт'
          AND (
            (notified_at IS NULL AND notify_attempts < $1)
-           OR (emailed_at IS NULL AND email_attempts < $1)
            OR (max_notified_at IS NULL AND max_notify_attempts < $1)
          )
        ORDER BY id ASC`,
@@ -307,16 +232,6 @@ async function backgroundRetryLoop() {
           console.log(`Фоновый повтор: заявка #${lead.id} отправлена в Telegram.`);
         } catch (err) {
           console.error(`Фоновый повтор: заявка #${lead.id} — Telegram попытка не удалась —`, err.message);
-        }
-      }
-      if (!lead.emailed_at) {
-        await getPool().query('UPDATE leads SET email_attempts = email_attempts + 1 WHERE id = $1', [lead.id]);
-        try {
-          await sendLeadEmail(lead);
-          await getPool().query('UPDATE leads SET emailed_at = now() WHERE id = $1', [lead.id]);
-          console.log(`Фоновый повтор: заявка #${lead.id} отправлена на email.`);
-        } catch (err) {
-          console.error(`Фоновый повтор: заявка #${lead.id} — email попытка не удалась —`, err.message);
         }
       }
       if (!lead.max_notified_at) {
@@ -574,19 +489,32 @@ app.post('/api/chat/send', async (req, res) => {
   }
 
   try {
+    // Чат идёт только в MAX (по решению пользователя, 17.09.2026) — Telegram-ветка
+    // чата отключена. Первое сообщение посетителя получает авто-приветствие с
+    // просьбой представиться; второе сообщение трактуется как имя и запоминается
+    // (chat_name_<visitorId> в bot_state), дальше уведомления в MAX подписаны им.
+    const priorMessages = await getChatMessagesSince(visitorId, 0);
+    const isFirstMessage = !priorMessages.some((m) => m.direction === 'visitor');
+    const nameStateKey = `chat_name_${visitorId}`;
+    let visitorName = isFirstMessage ? null : await getBotState(nameStateKey);
+
     const saved = await insertChatMessage({ visitorId, direction: 'visitor', text: trimmed });
     res.json({ ok: true, id: saved.id });
 
-    try {
-      const shortId = visitorId.slice(0, 6).toUpperCase();
-      const telegramMessageId = await sendChatMessageToGroup(`💬 Вопрос с сайта (#${shortId}):\n${trimmed}`);
-      await setChatMessageTelegramId(saved.id, telegramMessageId);
-    } catch (err) {
-      console.error('Чат: не удалось переслать сообщение в Telegram:', err.message);
+    let maxText;
+    if (isFirstMessage) {
+      await insertChatMessage({ visitorId, direction: 'manager', text: 'Добрый день! Как я могу к вам обращаться?' });
+      maxText = `💬 Новый посетитель на сайте:\n${trimmed}`;
+    } else if (!visitorName) {
+      visitorName = trimmed.slice(0, 60);
+      await setBotState(nameStateKey, visitorName);
+      maxText = `💬 Представился как «${visitorName}»`;
+    } else {
+      maxText = `💬 ${visitorName}:\n${trimmed}`;
     }
 
     try {
-      await sendMaxChatMessage(`💬 Вопрос с сайта:\n${trimmed}`);
+      await sendMaxChatMessage(maxText);
     } catch (err) {
       console.error('Чат: не удалось переслать сообщение в MAX:', err.message);
     }
@@ -627,7 +555,6 @@ app.post('/api/leads', async (req, res) => {
   }
 
   notifyTelegramGroup({ id: leadId, name, phone, project, callTime });
-  notifyEmail({ id: leadId, name, phone, project, callTime });
   notifyMaxChat({ id: leadId, name, phone, project, callTime });
 });
 
