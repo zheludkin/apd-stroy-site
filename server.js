@@ -469,6 +469,92 @@ async function maxChatPollLoop() {
   }
 }
 
+// Ежедневный отчёт по Яндекс Директ в MAX (по просьбе пользователя, 17.09.2026).
+// Проверка раз в час, отправка один раз в сутки после 9:00 — так переживает
+// рестарты процесса и не спамит, если сервер перезапустился несколько раз подряд.
+const DIRECT_REPORT_CHECK_INTERVAL_MS = 60 * 60 * 1000;
+const DIRECT_REPORT_STATE_KEY = 'direct_report_last_sent_date';
+const DIRECT_REPORT_SEND_AFTER_HOUR = 9;
+
+async function fetchDirectCampaignReport(dateStr) {
+  const token = process.env.YANDEX_DIRECT_OAUTH_TOKEN;
+  if (!token) throw new Error('YANDEX_DIRECT_OAUTH_TOKEN не задан');
+
+  const body = {
+    params: {
+      SelectionCriteria: { DateFrom: dateStr, DateTo: dateStr },
+      FieldNames: ['CampaignName', 'Impressions', 'Clicks', 'Ctr', 'AvgCpc', 'Cost', 'Conversions'],
+      ReportName: `daily-max-report-${Date.now()}`,
+      ReportType: 'CAMPAIGN_PERFORMANCE_REPORT',
+      DateRangeType: 'CUSTOM_DATE',
+      Format: 'TSV',
+      IncludeVAT: 'YES',
+      IncludeDiscount: 'NO',
+    },
+  };
+
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const response = await fetch('https://api.direct.yandex.com/json/v5/reports', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json; charset=utf-8',
+        'Accept-Language': 'ru',
+        processingMode: 'auto',
+        returnMoneyInMicros: 'false',
+        skipReportHeader: 'true',
+        skipReportSummary: 'true',
+      },
+      body: JSON.stringify(body),
+    });
+    if (response.status === 200) return response.text();
+    if (response.status === 201 || response.status === 202) {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      continue;
+    }
+    throw new Error(`Direct reports ${response.status}: ${await response.text()}`);
+  }
+  throw new Error('Direct reports: таймаут ожидания отчёта');
+}
+
+function formatDirectReport(dateStr, tsv) {
+  const lines = tsv.trim().split('\n').filter(Boolean);
+  if (!lines.length) {
+    return `📊 Яндекс Директ за ${dateStr}: показов не было.`;
+  }
+  let totalCost = 0;
+  let totalClicks = 0;
+  let totalConversions = 0;
+  const parts = lines.map((line) => {
+    const [name, impressions, clicks, ctr, avgCpc, cost, conversions] = line.split('\t');
+    totalCost += parseFloat(cost) || 0;
+    totalClicks += parseInt(clicks, 10) || 0;
+    totalConversions += parseInt(conversions, 10) || 0;
+    return `${name}: ${clicks} кликов (${ctr}% CTR), ${cost}₽ по ${avgCpc}₽/клик, конверсий: ${conversions}`;
+  });
+  return `📊 Яндекс Директ за ${dateStr}:\n${parts.join('\n')}\n\nИтого: ${totalClicks} кликов, ${totalCost.toFixed(2)}₽, ${totalConversions} конверсий`;
+}
+
+async function sendDailyDirectReport() {
+  const now = new Date();
+  if (now.getHours() < DIRECT_REPORT_SEND_AFTER_HOUR) return;
+
+  const today = now.toISOString().slice(0, 10);
+  const lastSent = await getBotState(DIRECT_REPORT_STATE_KEY);
+  if (lastSent === today) return;
+
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+  try {
+    const tsv = await fetchDirectCampaignReport(yesterday);
+    const message = formatDirectReport(yesterday, tsv);
+    await sendMaxChatMessage(message);
+    await setBotState(DIRECT_REPORT_STATE_KEY, today);
+  } catch (err) {
+    console.error('Ежедневный отчёт Директ → MAX не отправлен:', err.message);
+  }
+}
+
 app.post('/api/chat/send', async (req, res) => {
   const { visitorId, text } = req.body || {};
   const trimmed = (text || '').trim();
@@ -557,6 +643,8 @@ ensureSchema()
     setInterval(uploadOfflineConversionsLoop, METRIKA_UPLOAD_INTERVAL_MS);
     maxChatPollLoop();
     setInterval(maxChatPollLoop, MAX_CHAT_POLL_INTERVAL_MS);
+    sendDailyDirectReport();
+    setInterval(sendDailyDirectReport, DIRECT_REPORT_CHECK_INTERVAL_MS);
   })
   .catch((err) => console.error('Не удалось подготовить схему БД:', err.message));
 
