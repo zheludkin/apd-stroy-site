@@ -248,11 +248,8 @@ a {
   justify-content: center;
   width: 38px;
   height: 38px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #2f6df6, #8b3ff5);
-  color: var(--white);
-  font-weight: 800;
-  font-size: 1rem;
+  border-radius: 28%;
+  background: linear-gradient(135deg, #4f7cff, #9b3ff0);
   flex-shrink: 0;
   transition: transform 0.15s ease, filter 0.15s ease;
 }
@@ -260,6 +257,11 @@ a {
 .header-max:hover {
   filter: brightness(1.08);
   transform: translateY(-1px);
+}
+
+.header-max svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* Hero */
