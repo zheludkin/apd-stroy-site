@@ -1264,16 +1264,16 @@ a {
 .lightbox-close,
 .lightbox-nav {
   position: absolute;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.55);
   color: var(--white);
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.4);
   cursor: pointer;
   transition: background 0.15s ease;
 }
 
 .lightbox-close:hover,
 .lightbox-nav:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.75);
 }
 
 .lightbox-close {
