@@ -242,6 +242,26 @@ a {
   height: 19px;
 }
 
+.header-max {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2f6df6, #8b3ff5);
+  color: var(--white);
+  font-weight: 800;
+  font-size: 1rem;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.header-max:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
 /* Hero */
 .hero {
   position: relative;
