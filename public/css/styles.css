@@ -204,6 +204,12 @@ a {
   gap: 18px;
 }
 
+.header-socials {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .header-phones {
   display: flex;
   flex-direction: column;
@@ -1172,6 +1178,29 @@ a {
     flex-wrap: wrap;
   }
 
+  .header-banks {
+    display: flex;
+    gap: 10px;
+    flex-basis: 100%;
+    order: 2;
+    padding-top: 4px;
+  }
+
+  .header-banks-label {
+    display: none;
+  }
+
+  .header-banks img {
+    height: 16px;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+    order: 3;
+  }
+
+  .header-phones,
   .header-phone {
     display: none;
   }
