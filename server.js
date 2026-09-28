@@ -538,6 +538,38 @@ app.get('/api/chat/messages', async (req, res) => {
   }
 });
 
+// Клик по кнопке Telegram/MAX на сайте → уведомление в MAX (по просьбе пользователя, 28.09.2026):
+// кнопки ведут в личку менеджера, бот таких обращений не видит, а Директ считает их
+// «конверсиями». Ничего не храним, только шлём уведомление. Лимиты — защита от спама.
+const MESSENGER_CLICK_NAMES = { telegram: 'Telegram', max: 'MAX' };
+const messengerClickHits = new Map();
+let messengerClickHourStart = 0;
+let messengerClickHourCount = 0;
+
+app.post('/api/messenger-click', (req, res) => {
+  res.status(204).end();
+  const { messenger, page, fromAd } = req.body || {};
+  const label = MESSENGER_CLICK_NAMES[messenger];
+  if (!label) return;
+
+  const now = Date.now();
+  const ip = req.headers['x-forwarded-for'] ? String(req.headers['x-forwarded-for']).split(',')[0].trim() : req.ip;
+  if (now - (messengerClickHits.get(ip) || 0) < 60 * 1000) return;
+  messengerClickHits.set(ip, now);
+  if (messengerClickHits.size > 1000) messengerClickHits.clear();
+  if (now - messengerClickHourStart > 60 * 60 * 1000) {
+    messengerClickHourStart = now;
+    messengerClickHourCount = 0;
+  }
+  if (++messengerClickHourCount > 20) return;
+
+  const safePage = typeof page === 'string' ? page.slice(0, 120).replace(/[^\w\-/.%]/g, '') : '';
+  const time = new Date().toLocaleString('ru-RU', { timeZone: 'Asia/Yekaterinburg', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const source = fromAd === true ? 'пришёл с рекламы Директа' : 'не с рекламы';
+  const text = `👆 На сайте нажали кнопку ${label} — ${time}, ${source}.\nСтраница: ${safePage || '/'}\nПроверьте личку ${label} (в т.ч. архив и запросы на переписку).`;
+  sendMaxChatMessage(text).catch((err) => console.error('Клик по мессенджеру: не удалось уведомить MAX:', err.message));
+});
+
 app.post('/api/leads', async (req, res) => {
   const { name, phone, project, callTime, yclid } = req.body || {};
 
