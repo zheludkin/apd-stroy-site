@@ -571,11 +571,19 @@ app.post('/api/messenger-click', (req, res) => {
 });
 
 app.post('/api/leads', async (req, res) => {
-  const { name, phone, project, callTime, yclid } = req.body || {};
+  const { name, project, callTime, yclid } = req.body || {};
+  let { phone } = req.body || {};
 
-  if (!name || !name.trim() || !phone || !phone.trim()) {
+  if (!name || !name.trim() || !phone || !String(phone).trim()) {
     return res.status(400).json({ ok: false, error: 'Укажите имя и телефон.' });
   }
+  // Российский номер → +7XXXXXXXXXX (04.10.2026: пришла заявка с 12-значным номером, проверки не было).
+  let digits = String(phone).replace(/\D/g, '');
+  if (digits.length === 10) digits = '7' + digits;
+  if (!(digits.length === 11 && (digits[0] === '7' || digits[0] === '8'))) {
+    return res.status(400).json({ ok: false, error: 'Проверьте номер телефона: нужно 11 цифр, например +7 (912) 345-67-89.' });
+  }
+  phone = '+7' + digits.slice(1);
 
   let leadId;
   try {
